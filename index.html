@@ -25,6 +25,10 @@
         .radio-group label { display: block; margin-bottom: 8px; cursor: pointer; font-size: 14px; }
         .radio-group label:last-child { margin-bottom: 0; }
         .radio-group input[type="radio"] { margin-right: 10px; accent-color: #00adb5; }
+
+        /* Fullscreen styles for the spectrometer wrapper */
+        #spectroWrapper:fullscreen { height: 100vh !important; border: none; border-radius: 0; max-width: 100%; margin: 0; }
+        #spectroWrapper:-webkit-full-screen { height: 100vh !important; border: none; border-radius: 0; max-width: 100%; margin: 0; }
     </style>
 </head>
 <body>
@@ -87,9 +91,21 @@
     <!-- LIVE SPECTROMETER -->
     <div class="section">
         <p data-translate="titleSpectrometer">Live Mobile Spectrometer</p>
-        <!-- Internal resolution is 300x128 for speed, stretched via CSS -->
-        <canvas id="spectroCanvas" width="300" height="128" style="width:100%; height:200px; background:#000; border: 1px solid #333; border-radius: 4px; display: block; margin: 0 auto;"></canvas>
-        <button id="btnSpectro" onclick="toggleSpectrometer()" data-translate="btnStartSpectro">START SPECTROMETER</button>
+
+        <!-- Wrapper to handle fullscreen and overlay positioning -->
+        <div id="spectroWrapper" style="position: relative; width: 100%; height: 200px; background: #000; border: 1px solid #333; border-radius: 4px; overflow: hidden; margin: 0 auto;">
+            <canvas id="spectroCanvas" width="300" height="128" style="width: 100%; height: 100%; display: block;"></canvas>
+
+            <!-- Frequency scale overlay -->
+            <div id="freqScale" style="position: absolute; right: 0; top: 0; bottom: 0; width: 45px; background: rgba(0,0,0,0.7); color: #00adb5; font-size: 10px; font-weight: bold; display: none; flex-direction: column; justify-content: space-between; padding: 5px; text-align: right; pointer-events: none; border-left: 1px solid #333;">
+                <!-- Labels injected via JavaScript -->
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="btnSpectro" onclick="toggleSpectrometer()" data-translate="btnStartSpectro" style="margin-top: 0;">START</button>
+            <button onclick="toggleFullscreen()" data-translate="btnFullscreen" style="margin-top: 0; width: 40%; background: #444;">FULLSCREEN</button>
+        </div>
     </div>
 
     <script>
@@ -115,8 +131,8 @@
                 statusProcessingPhone: "Processing locally... (Fast Mode)",
                 statusProcessingPC: "Processing locally... (High Quality Mode - May take a moment)",
                 titleSpectrometer: "Live Mobile Spectrometer",
-                btnStartSpectro: "START SPECTROMETER",
-                btnStopSpectro: "STOP SPECTROMETER",
+                btnStartSpectro: "START",
+                btnFullscreen: "FULLSCREEN",
                 errMic: "Microphone access denied or unavailable."
             },
             ro: {
@@ -138,8 +154,8 @@
                 statusProcessingPhone: "Se procesează local... (Mod Rapid)",
                 statusProcessingPC: "Se procesează local... (Mod Calitate Înaltă - Va dura puțin)",
                 titleSpectrometer: "Spectrometru Mobil Live",
-                btnStartSpectro: "PORNEȘTE SPECTROMETRUL",
-                btnStopSpectro: "OPREȘTE SPECTROMETRUL",
+                btnStartSpectro: "PORNEȘTE",
+                btnFullscreen: "ECRAN COMPLET",
                 errMic: "Accesul la microfon a fost refuzat sau este indisponibil."
             }
         };
@@ -459,8 +475,41 @@
         let spectroReqId = null;
         let isSpectroRunning = false;
 
+        function toggleFullscreen() {
+            const wrapper = document.getElementById('spectroWrapper');
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (wrapper.requestFullscreen) {
+                    wrapper.requestFullscreen();
+                } else if (wrapper.webkitRequestFullscreen) {
+                    wrapper.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        function buildFreqScale(nyquist) {
+            const scaleDiv = document.getElementById('freqScale');
+            scaleDiv.innerHTML = '';
+            // Generate 5 evenly spaced frequency labels from Nyquist down to 0
+            for (let i = 4; i >= 0; i--) {
+                const freqHz = nyquist * (i / 4);
+                const freqKHz = freqHz / 1000;
+
+                const span = document.createElement('span');
+                // Format: show 1 decimal for kHz, or 0 if exactly zero
+                span.innerText = freqKHz >= 1 ? freqKHz.toFixed(1) + 'k' : '0';
+                scaleDiv.appendChild(span);
+            }
+        }
+
         async function toggleSpectrometer() {
             const btn = document.getElementById('btnSpectro');
+            const freqScaleDiv = document.getElementById('freqScale');
 
             if (isSpectroRunning) {
                 cancelAnimationFrame(spectroReqId);
@@ -471,16 +520,28 @@
                 isSpectroRunning = false;
                 btn.innerText = translations[currentLang].btnStartSpectro;
                 btn.style.background = "#00adb5";
+                freqScaleDiv.style.display = "none";
 
                 const canvas = document.getElementById('spectroCanvas');
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Exit fullscreen if active when stopping
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    toggleFullscreen();
+                }
                 return;
             }
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    },
+                    video: false
+                });
                 spectroAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 analyser = spectroAudioCtx.createAnalyser();
                 analyser.fftSize = 1024;
@@ -492,6 +553,10 @@
                 isSpectroRunning = true;
                 btn.innerText = translations[currentLang].btnStopSpectro;
                 btn.style.background = "#d9534f";
+
+                // Build and display the frequency scale dynamically based on the device's audio sample rate
+                buildFreqScale(spectroAudioCtx.sampleRate / 2);
+                freqScaleDiv.style.display = "flex";
 
                 drawSpectrogram();
             } catch (err) {
