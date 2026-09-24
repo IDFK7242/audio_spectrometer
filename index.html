@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Eridian Communicator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { background: #121212; color: #cccccc; font-family: monospace; text-align: center; padding: 20px; }
+        .lang-container { max-width: 500px; margin: 0 auto 10px auto; display: flex; justify-content: flex-end; }
+        .lang-switch { display: flex; border: 1px solid #333; border-radius: 4px; overflow: hidden; background: #1a1a1a; }
+        .lang-btn { background: none; border: none; color: #666; padding: 6px 12px; cursor: pointer; font-family: monospace; font-weight: bold; transition: all 0.2s; }
+        .lang-btn.active { background: #00adb5; color: #fff; }
+        .section { background: #1a1a1a; border: 1px solid #333; padding: 20px; border-radius: 8px; max-width: 500px; margin: 20px auto; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        input[type="text"] { font-size: 18px; padding: 10px; width: 80%; text-align: center; background: #222; color: #fff; border: 1px solid #00adb5; border-radius: 4px; }
+        input[type="file"] { margin: 15px 0; color: #ccc; }
+        button { font-size: 16px; padding: 12px 24px; margin-top: 15px; background: #00adb5; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s;}
+        button:active { background: #007a80; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px auto; }
+        .key { background: #222; border: 1px solid #444; padding: 15px; font-size: 18px; color: #00adb5; cursor: pointer; font-weight: bold; border-radius: 4px;}
+        .key:active { background: #00adb5; color: #fff; }
+        #statusMessage { margin-top: 15px; color: #00adb5; font-weight: bold; height: 20px;}
+        audio { width: 100%; margin-top: 15px; outline: none; }
+    </style>
+</head>
+<body>
+    <!-- LANGUAGE SWITCHER -->
+    <div class="lang-container">
+        <div class="lang-switch">
+            <button onclick="setLanguage('en')" id="lang-en" class="lang-btn active">EN</button>
+            <button onclick="setLanguage('ro')" id="lang-ro" class="lang-btn">RO</button>
+        </div>
+    </div>
+
+    <h2 data-translate="titleMain">Sound visualizer</h2>
+
+    <!-- TEXT TO HEX CONVERTER -->
+    <div class="section">
+        <p data-translate="titleConverter">Text to Hex Converter</p>
+        <input type="text" id="plainTextInput" placeholder="Enter normal text here (e.g. Hello)" data-placeholder="inputPlaceholder">
+        <button onclick="convertToHex()" data-translate="btnConvert">CONVERT TO HEX</button>
+    </div>
+
+    <!-- ORIGINAL HEX TRANSMITTER -->
+    <div class="section">
+        <p data-translate="titleTransmitter">Type Hex or tap keys to speak to Rocky</p>
+        <input type="text" id="hexInput" placeholder="Rocky says hi" data-placeholder="hexPlaceholder" value="A">
+        <button onclick="transmitInput()" data-translate="btnTransmit">TRANSMIT STRING</button>
+        <div class="grid">
+            <div class="key" onclick="playSingleHex('1')">1</div>
+            <div class="key" onclick="playSingleHex('2')">2</div>
+            <div class="key" onclick="playSingleHex('4')">4</div>
+            <div class="key" onclick="playSingleHex('8')">8</div>
+        </div>
+        <p style="font-size: 12px; color: #666;" data-translate="notesLabel">Individual notes: C5, E5, G5, C6</p>
+    </div>
+
+    <!-- IMAGE TO SPECTROGRAM -->
+    <div class="section">
+        <p data-translate="titleUpload">Upload Image for Spectrogram Audio</p>
+        <input type="file" id="imageInput" accept="image/png, image/jpeg">
+        <button id="uploadBtn" onclick="uploadImage()" data-translate="btnUpload">TRANSMIT IMAGE</button>
+        <div id="statusMessage"></div>
+        <audio id="audioPlayer" controls style="display: none;"></audio>
+    </div>
+
+    <!-- LIVE SPECTROMETER -->
+    <div class="section">
+        <p data-translate="titleSpectrometer">Live Mobile Spectrometer</p>
+        <!-- Internal resolution is 300x128 for speed, stretched via CSS -->
+        <canvas id="spectroCanvas" width="300" height="128" style="width:100%; height:200px; background:#000; border: 1px solid #333; border-radius: 4px; display: block; margin: 0 auto;"></canvas>
+        <button id="btnSpectro" onclick="toggleSpectrometer()" data-translate="btnStartSpectro">START SPECTROMETER</button>
+    </div>
+
+    <script>
+        const SERVER_URL = "";
+        let currentLang = "en";
+
+        const translations = {
+            en: {
+                titleMain: "PROJECT HAIL MARY",
+                titleConverter: "Text to Hex Converter",
+                inputPlaceholder: "Enter normal text here (e.g. Hello)",
+                btnConvert: "CONVERT TO HEX",
+                titleTransmitter: "Type Hex or tap keys to speak to Rocky",
+                hexPlaceholder: "Rocky says hi",
+                btnTransmit: "TRANSMIT STRING",
+                notesLabel: "Binary Encoding: 1200Hz (0) and 2400Hz (1) Square",
+                titleUpload: "Upload Image for Spectrogram Audio",
+                btnUpload: "TRANSMIT IMAGE",
+                alertNoFile: "Please select an image first!",
+                statusQueue: "Queueing...",
+                statusReady: "Ready!",
+                statusFailed: "Failed to process image.",
+                statusProcessing: "Processing in queue... (GPU computing)",
+                statusError: "Error uploading.",
+                statusLost: "Connection lost.",
+                titleSpectrometer: "Live Mobile Spectrometer",
+                btnStartSpectro: "START SPECTROMETER",
+                btnStopSpectro: "STOP SPECTROMETER",
+                errMic: "Microphone access denied or unavailable."
+            },
+            ro: {
+                titleMain: "PROIECTUL HAIL MARY",
+                titleConverter: "Convertor Text în Hex",
+                inputPlaceholder: "Introdu text normal aici (ex. Salut)",
+                btnConvert: "CONVERTEȘTE ÎN HEX",
+                titleTransmitter: "Scrie în Hex sau apasă tastele pentru a vorbi cu Rocky",
+                hexPlaceholder: "Rocky spune salut",
+                btnTransmit: "TRANSMITE ȘIR",
+                notesLabel: "Codare Binară: 1200Hz (0) și 2400Hz (1) Pătrat",
+                titleUpload: "Încarcă Imagine pentru Audio Spectrogramă",
+                btnUpload: "TRANSMITE IMAGINE",
+                alertNoFile: "Vă rugăm să selectați o imagine mai întâi!",
+                statusQueue: "În coadă...",
+                statusReady: "Gata!",
+                statusFailed: "Eroare la procesarea imaginii.",
+                statusProcessing: "Se procesează în coadă... (calcul GPU)",
+                statusError: "Eroare la încărcare.",
+                statusLost: "Conexiune pierdută.",
+                titleSpectrometer: "Spectrometru Mobil Live",
+                btnStartSpectro: "PORNEȘTE SPECTROMETRUL",
+                btnStopSpectro: "OPREȘTE SPECTROMETRUL",
+                errMic: "Accesul la microfon a fost refuzat sau este indisponibil."
+            }
+        };
+
+        function setLanguage(lang) {
+            currentLang = lang;
+
+            // Toggle active buttons
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            document.getElementById('lang-ro').classList.toggle('active', lang === 'ro');
+
+            // Translate text content
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (translations[lang][key]) {
+                    el.innerText = translations[lang][key];
+                }
+            });
+
+            // Translate placeholders
+            document.querySelectorAll('[data-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-placeholder');
+                if (translations[lang][key]) {
+                    el.setAttribute('placeholder', translations[lang][key]);
+                }
+            });
+        }
+
+        function convertToHex() {
+            let text = document.getElementById('plainTextInput').value;
+
+            // CRITICAL FIX: Replace spaces with underscores so they don't generate Hex 20
+            text = text.replace(/ /g, '_');
+
+            let hexStr = "";
+            for (let i = 0; i < text.length; i++) {
+                let hexChar = text.charCodeAt(i).toString(16).toUpperCase();
+                hexStr += hexChar.length < 2 ? "0" + hexChar : hexChar;
+            }
+            document.getElementById('hexInput').value = hexStr;
+        }
+
+        // --- HEX AUDIO LOGIC ---
+
+        function playBinarySquare(hexChar, audioCtx, startTime) {
+            let val = parseInt(hexChar, 16);
+            let bitDuration = 0.1; // 100ms per bit
+
+            // Read 4 bits sequentially (MSB to LSB)
+            for (let i = 3; i >= 0; i--) {
+                let bit = (val >> i) & 1;
+
+                let osc = audioCtx.createOscillator();
+                let gainNode = audioCtx.createGain();
+
+                // Reverting to square wave generation
+                osc.type = 'square';
+
+                // Frequency Shift Keying (FSK) binary encoding: 1200 Hz for '0', 2400 Hz for '1'
+                osc.frequency.setValueAtTime(bit === 1 ? 2400 : 1200, startTime);
+
+                // Envelope to prevent popping at the start and end of the square pulse
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, startTime + 0.01);
+                gainNode.gain.setValueAtTime(0.1, startTime + bitDuration - 0.01);
+                gainNode.gain.linearRampToValueAtTime(0, startTime + bitDuration);
+
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc.start(startTime);
+                osc.stop(startTime + bitDuration);
+
+                // Advance the start time for the next sequential bit in the character
+                startTime += bitDuration;
+            }
+        }
+
+        function transmitInput() {
+            let text = document.getElementById('hexInput').value.toUpperCase().replace(/[^0-9A-F]/g, '');
+            let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            let time = audioCtx.currentTime + 0.05;
+            for (let char of text) {
+                playBinarySquare(char, audioCtx, time);
+                // 4 bits * 0.1s = 0.4s duration per hex character, plus 0.05s silence gap
+                time += 0.45;
+            }
+        }
+
+        function playSingleHex(char) {
+            let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            playBinarySquare(char, audioCtx, audioCtx.currentTime);
+        }
+
+// --- 100% LOCAL IMAGE-TO-AUDIO ENGINE ---
+
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            const btn = document.getElementById('uploadBtn');
+            const status = document.getElementById('statusMessage');
+            const audio = document.getElementById('audioPlayer');
+
+            if (!fileInput.files[0]) {
+                alert(translations[currentLang].alertNoFile);
+                return;
+            }
+
+            // Lock UI and show processing state
+            btn.disabled = true;
+            status.innerText = "Processing locally... (May freeze for a few seconds)";
+            audio.style.display = "none";
+            audio.src = "";
+
+            const file = fileInput.files[0];
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+
+            img.onload = async () => {
+                // Yield thread to allow UI to update the status text before heavy lifting starts
+                setTimeout(() => processImageToAudio(img, btn, status, audio), 50);
+            };
+        }
+
+        function processImageToAudio(img, btn, status, audioEl) {
+            const durationSec = 6.0;
+            const sr = 16000;
+            // Lower resolution than PyTorch (128 bins vs 1025) to prevent mobile browser crashes
+            const n_bins = 128;
+            const n_frames = 200;
+
+            // 1. Draw image to offscreen canvas to extract pixel data
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            canvas.width = n_frames;
+            canvas.height = n_bins;
+            ctx.drawImage(img, 0, 0, n_frames, n_bins);
+            const imgData = ctx.getImageData(0, 0, n_frames, n_bins).data;
+
+            // 2. Find dominant background color by sampling a few pixels
+            let r_sum = 0, g_sum = 0, b_sum = 0;
+            const sampleCount = 50;
+            for(let i=0; i<sampleCount; i++) {
+                const idx = Math.floor(Math.random() * (n_frames * n_bins)) * 4;
+                r_sum += imgData[idx];
+                g_sum += imgData[idx+1];
+                b_sum += imgData[idx+2];
+            }
+            const domR = r_sum / sampleCount;
+            const domG = g_sum / sampleCount;
+            const domB = b_sum / sampleCount;
+
+            const maxDist = Math.sqrt(255*255 * 3);
+
+            // 3. Audio generation setup
+            const totalSamples = Math.floor(durationSec * sr);
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)({sampleRate: sr});
+            const buffer = audioCtx.createBuffer(1, totalSamples, sr);
+            const channelData = buffer.getChannelData(0);
+
+            const freqs = new Float32Array(n_bins);
+            const phases = new Float32Array(n_bins);
+
+            // Map vertical pixels to frequencies (200Hz to 7800Hz)
+            for (let y = 0; y < n_bins; y++) {
+                // Invert Y so high frequencies are at the top of the image
+                const flippedY = (n_bins - 1) - y;
+                freqs[flippedY] = 200.0 + (y / n_bins) * (7800.0 - 200.0);
+                phases[flippedY] = Math.random() * 2 * Math.PI; // Random initial phase
+            }
+
+            const samplesPerFrame = totalSamples / n_frames;
+
+            // 4. Additive Synthesis (Heavy CPU Loop)
+            for (let x = 0; x < n_frames; x++) {
+                const startSample = Math.floor(x * samplesPerFrame);
+                const endSample = Math.floor((x + 1) * samplesPerFrame);
+
+                // Calculate magnitudes for this time slice
+                const magnitudes = new Float32Array(n_bins);
+                for (let y = 0; y < n_bins; y++) {
+                    const idx = (y * n_frames + x) * 4;
+                    const dr = imgData[idx] - domR;
+                    const dg = imgData[idx+1] - domG;
+                    const db = imgData[idx+2] - domB;
+
+                    const dist = Math.sqrt(dr*dr + dg*dg + db*db);
+                    let M = dist / maxDist;
+
+                    // Filter noise threshold
+                    if (M < 0.1) M = 0;
+                    magnitudes[y] = M;
+                }
+
+                // Generate waveform for this time slice
+                for (let i = startSample; i < endSample; i++) {
+                    const t = i / sr;
+                    let sampleVal = 0;
+
+                    // Sum sine waves for all frequency bins
+                    for (let y = 0; y < n_bins; y++) {
+                        if (magnitudes[y] > 0) {
+                            sampleVal += magnitudes[y] * Math.sin(2 * Math.PI * freqs[y] * t + phases[y]);
+                        }
+                    }
+                    channelData[i] = sampleVal;
+                }
+            }
+
+            // 5. Normalize Audio
+            let maxAmp = 0;
+            for (let i = 0; i < totalSamples; i++) {
+                if (Math.abs(channelData[i]) > maxAmp) maxAmp = Math.abs(channelData[i]);
+            }
+            if (maxAmp > 0) {
+                for (let i = 0; i < totalSamples; i++) {
+                    channelData[i] = (channelData[i] / maxAmp) * 0.9;
+                }
+            }
+
+            // 6. Encode to WAV directly in browser memory
+            const wavBlob = bufferToWav(buffer, totalSamples, sr);
+            const url = URL.createObjectURL(wavBlob);
+
+            status.innerText = translations[currentLang].statusReady;
+            audioEl.src = url;
+            audioEl.style.display = "block";
+            btn.disabled = false;
+        }
+
+        function bufferToWav(abuffer, len, sr) {
+            const numOfChan = abuffer.numberOfChannels;
+            const length = len * numOfChan * 2 + 44;
+            const buffer = new ArrayBuffer(length);
+            const view = new DataView(buffer);
+            const channels = [];
+            let sample;
+            let offset = 0;
+            let pos = 0;
+
+            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8); // file length - 8
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt " chunk
+            setUint32(16);         // length = 16
+            setUint16(1);          // PCM (uncompressed)
+            setUint16(numOfChan);
+            setUint32(sr);
+            setUint32(sr * 2 * numOfChan); // avg. bytes/sec
+            setUint16(numOfChan * 2);      // block-align
+            setUint16(16);         // 16-bit
+            setUint32(0x61746164); // "data" - chunk
+            setUint32(length - pos - 4); // chunk length
+
+            for(let i = 0; i < abuffer.numberOfChannels; i++) {
+                channels.push(abuffer.getChannelData(i));
+            }
+
+            while(pos < length) {
+                for(let i = 0; i < numOfChan; i++) {
+                    sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0; // float to 16-bit PCM
+                    view.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+            return new Blob([buffer], {type: "audio/wav"});
+        }
+
+        // --- LIVE MOBILE SPECTROMETER LOGIC ---
+        let spectroAudioCtx = null;
+        let analyser = null;
+        let spectroMic = null;
+        let spectroReqId = null;
+        let isSpectroRunning = false;
+
+        async function toggleSpectrometer() {
+            const btn = document.getElementById('btnSpectro');
+
+            if (isSpectroRunning) {
+                // Stop rendering and release hardware
+                cancelAnimationFrame(spectroReqId);
+                if (spectroMic) spectroMic.disconnect();
+                if (analyser) analyser.disconnect();
+                if (spectroAudioCtx) spectroAudioCtx.close();
+
+                isSpectroRunning = false;
+                btn.innerText = translations[currentLang].btnStartSpectro;
+                btn.style.background = "#00adb5";
+
+                // Clear the canvas
+                const canvas = document.getElementById('spectroCanvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+
+            try {
+                // Request mic access
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+
+                spectroAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = spectroAudioCtx.createAnalyser();
+                analyser.fftSize = 1024; // 512 frequency bins - fast enough for mobile
+                analyser.smoothingTimeConstant = 0.2;
+
+                spectroMic = spectroAudioCtx.createMediaStreamSource(stream);
+                spectroMic.connect(analyser);
+
+                isSpectroRunning = true;
+                btn.innerText = translations[currentLang].btnStopSpectro;
+                btn.style.background = "#d9534f"; // Red to indicate active/stop
+
+                drawSpectrogram();
+            } catch (err) {
+                alert(translations[currentLang].errMic);
+            }
+        }
+
+        function drawSpectrogram() {
+            const canvas = document.getElementById('spectroCanvas');
+            // willReadFrequently optimizes the canvas for heavy drawImage shifting on some mobile browsers
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            let lastTime = 0;
+            const SHIFT_PX = 2; // Shift by 2 pixels to reduce draw load
+
+            function render(time) {
+                if (!isSpectroRunning) return;
+                spectroReqId = requestAnimationFrame(render);
+
+                // Throttle to ~30 FPS to save mobile battery and prevent thermal throttling
+                if (time - lastTime < 33) return;
+                lastTime = time;
+
+                analyser.getByteFrequencyData(dataArray);
+
+                // Shift the entire canvas left
+                ctx.drawImage(canvas, -SHIFT_PX, 0);
+
+                const w = canvas.width;
+                const h = canvas.height;
+                const rightEdge = w - SHIFT_PX;
+
+                // Map the 512 frequency bins down to the 128 vertical pixels
+                const binsPerPixel = Math.floor(bufferLength / h);
+
+                for (let y = 0; y < h; y++) {
+                    let sum = 0;
+                    for (let i = 0; i < binsPerPixel; i++) {
+                        sum += dataArray[y * binsPerPixel + i];
+                    }
+                    let val = sum / binsPerPixel;
+
+                    // Simple magma color mapping: dark -> red -> yellow
+                    let r = val;
+                    let g = val > 128 ? (val - 128) * 2 : 0;
+                    let b = val > 200 ? (val - 200) * 4 : 0;
+
+                    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                    // Invert Y coordinate so high frequencies are at the top
+                    ctx.fillRect(rightEdge, h - 1 - y, SHIFT_PX, 1);
+                }
+            }
+            spectroReqId = requestAnimationFrame(render);
+        }
+    </script>
+</body>
+</html>
