@@ -250,11 +250,12 @@
 
         function playBinarySquare(hexChar, audioCtx, startTime) {
             let val = parseInt(hexChar, 16);
-            let bitDuration = 0.25; // SLOWED DOWN: 250ms per bit
+            let bitTone = 0.20; // 200ms of active tone
+            let bitGap = 0.10;  // 100ms of absolute silence to kill the room reverb
+            let bitInterval = bitTone + bitGap;
 
             for (let i = 3; i >= 0; i--) {
                 let bit = (val >> i) & 1;
-
                 let osc = audioCtx.createOscillator();
                 let gainNode = audioCtx.createGain();
 
@@ -264,28 +265,31 @@
                 // Smooth envelope to prevent popping
                 gainNode.gain.setValueAtTime(0, startTime);
                 gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
-                gainNode.gain.setValueAtTime(0.2, startTime + bitDuration - 0.02);
-                gainNode.gain.linearRampToValueAtTime(0, startTime + bitDuration);
+                gainNode.gain.setValueAtTime(0.2, startTime + bitTone - 0.02);
+                gainNode.gain.linearRampToValueAtTime(0, startTime + bitTone);
 
                 osc.connect(gainNode);
-                // Connect to the master analyser so the oscilloscope can see it
                 gainNode.connect(txAnalyser);
 
                 osc.start(startTime);
-                osc.stop(startTime + bitDuration);
+                osc.stop(startTime + bitTone);
 
-                startTime += bitDuration;
+                startTime += bitInterval;
             }
         }
 
         function transmitInput() {
             let text = document.getElementById('hexInput').value.toUpperCase().replace(/[^0-9A-F]/g, '');
             let audioCtx = initTxAudio();
-            let time = audioCtx.currentTime + 0.05;
+
+            // HARDWARE WAKEUP PADDING:
+            // Give the OS 1.0 full second to turn on the speakers and mic before sending data
+            let time = audioCtx.currentTime + 1.0;
+
             for (let char of text) {
                 playBinarySquare(char, audioCtx, time);
-                // 1.0s duration per hex character + 0.5s silence gap to let room echo die
-                time += 1.5;
+                // 1.7s total spacing (1.2s char + 0.5s inter-character gap)
+                time += 1.7;
             }
         }
 
