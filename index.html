@@ -279,14 +279,17 @@
         }
 
         function transmitInput() {
-            let text = document.getElementById('hexInput').value.toUpperCase().replace(/[^0-9A-F]/g, '');
-            let audioCtx = initTxAudio();
+            // Grab the user's text
+            let rawText = document.getElementById('hexInput').value.toUpperCase().replace(/[^0-9A-F]/g, '');
 
+            // --- THE PREAMBLE ---
+            // Prepend a sacrificial 'F' to absorb the hardware lag and align the receiver's PLL.
+            let text = "F" + rawText;
+
+            let audioCtx = initTxAudio();
             let time = audioCtx.currentTime + 0.1;
 
             // --- SACRIFICIAL WAKEUP TONE ---
-            // A pure 2700Hz sine wave to open the OS audio gate and settle the mic AGC.
-            // Python ignores it because it doesn't hit the 2400/3000 FSK bins.
             let syncOsc = audioCtx.createOscillator();
             let syncGain = audioCtx.createGain();
             syncOsc.type = 'sine';
@@ -303,16 +306,16 @@
             syncOsc.start(time);
             syncOsc.stop(time + 0.5);
 
-            // 0.5s tone + 0.2s silence gap before the real data hits
-            time += 0.7;
+            // TIGHTENED GAP: Drop the silence gap from 0.2s to 0.1s so the mic AGC doesn't reset
+            time += 0.6;
 
             // --- ACTUAL DATA TRANSMISSION ---
             for (let char of text) {
                 playBinarySquare(char, audioCtx, time);
-                // 1.2s char + 0.5s inter-character gap
                 time += 1.7;
             }
         }
+
 
         function playSingleHex(char) {
             let audioCtx = initTxAudio();
