@@ -60,7 +60,7 @@
             <div class="key" onclick="playSingleHex('4')">4</div>
             <div class="key" onclick="playSingleHex('8')">8</div>
         </div>
-        <p style="font-size: 12px; color: #666;" data-translate="notesLabel">Binary Encoding: 1200Hz (0) and 2400Hz (1) Square</p>
+        <p style="font-size: 12px; color: #666;" data-translate="notesLabel">Binary Encoding: 2400Hz (0) and 3000Hz (1) Square</p>
 
         <!-- SIGNAL OSCILLOSCOPE -->
         <p style="margin-top: 15px; font-size: 14px;" data-translate="titleOscilloscope">Signal Oscilloscope</p>
@@ -120,7 +120,7 @@
                 titleTransmitter: "Type Hex or tap keys to comvert it to sound",
                 hexPlaceholder: "Try me",
                 btnTransmit: "TRANSMIT STRING",
-                notesLabel: "Binary Encoding: 1200Hz (0) and 2400Hz (1) Square",
+                notesLabel: "Binary Encoding: 2400Hz (0) and 3000Hz (1) Square",
                 titleOscilloscope: "Signal Oscilloscope",
                 titleUpload: "Upload Image for Spectrogram Audio",
                 txModePhone: "Phone to Phone Mode (Fast)",
@@ -143,7 +143,7 @@
                 titleTransmitter: "Scrie în Hex sau apasă tastele pentru a le converti in sunet",
                 hexPlaceholder: "Incearca sa scrii Salut",
                 btnTransmit: "TRANSMITE ȘIR",
-                notesLabel: "Codare Binară: 1200Hz (0) și 2400Hz (1) Semnal Pătrat",
+                notesLabel: "Codare Binară: 2400Hz (0) și 3000Hz (1) Semnal Pătrat",
                 titleOscilloscope: "Osciloscop Semnal",
                 titleUpload: "Încarcă Imagine pentru Audio Spectrogramă",
                 txModePhone: "Mod Telefon (Rapid)",
@@ -260,7 +260,7 @@
                 let gainNode = audioCtx.createGain();
 
                 osc.type = 'square';
-                osc.frequency.setValueAtTime(bit === 1 ? 2400 : 1200, startTime);
+                osc.frequency.setValueAtTime(bit === 1 ? 3000 : 2400, startTime);
 
                 // Smooth envelope to prevent popping
                 gainNode.gain.setValueAtTime(0, startTime);
@@ -285,12 +285,12 @@
             let time = audioCtx.currentTime + 0.1;
 
             // --- SACRIFICIAL WAKEUP TONE ---
-            // A pure 1800Hz sine wave to open the OS audio gate and settle the mic AGC.
-            // Python ignores it because it doesn't hit the 1200/2400 FSK bins.
+            // A pure 2700Hz sine wave to open the OS audio gate and settle the mic AGC.
+            // Python ignores it because it doesn't hit the 2400/3000 FSK bins.
             let syncOsc = audioCtx.createOscillator();
             let syncGain = audioCtx.createGain();
             syncOsc.type = 'sine';
-            syncOsc.frequency.setValueAtTime(1800, time);
+            syncOsc.frequency.setValueAtTime(2700, time);
 
             syncGain.gain.setValueAtTime(0, time);
             syncGain.gain.linearRampToValueAtTime(0.2, time + 0.1);
