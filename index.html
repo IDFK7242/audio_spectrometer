@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Eridian Communicator</title>
+    <title>Sound visualizer program</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background: #121212; color: #cccccc; font-family: monospace; text-align: center; padding: 20px; }
@@ -51,7 +51,7 @@
 
     <!-- ORIGINAL HEX TRANSMITTER -->
     <div class="section">
-        <p data-translate="titleTransmitter">Type Hex or tap keys to speak to Rocky</p>
+        <p data-translate="titleTransmitter">Type Hex or tap keys to convert them to sound</p>
         <input type="text" id="hexInput" placeholder="Rocky says hi" data-placeholder="hexPlaceholder" value="A">
         <button onclick="transmitInput()" data-translate="btnTransmit">TRANSMIT STRING</button>
         <div class="grid">
@@ -113,12 +113,12 @@
 
         const translations = {
             en: {
-                titleMain: "PROJECT HAIL MARY",
+                titleMain: "Sound Visualizer Program",
                 titleConverter: "Text to Hex Converter",
                 inputPlaceholder: "Enter normal text here (e.g. Hello)",
                 btnConvert: "CONVERT TO HEX",
-                titleTransmitter: "Type Hex or tap keys to speak to Rocky",
-                hexPlaceholder: "Rocky says hi",
+                titleTransmitter: "Type Hex or tap keys to comvert it to sound",
+                hexPlaceholder: "Try me",
                 btnTransmit: "TRANSMIT STRING",
                 notesLabel: "Binary Encoding: 1200Hz (0) and 2400Hz (1) Square",
                 titleOscilloscope: "Signal Oscilloscope",
@@ -136,12 +136,12 @@
                 errMic: "Microphone access denied or unavailable."
             },
             ro: {
-                titleMain: "PROIECTUL HAIL MARY",
+                titleMain: "Program pentru vizualizare sunetului",
                 titleConverter: "Convertor Text în Hex",
                 inputPlaceholder: "Introdu text normal aici (ex. Salut)",
                 btnConvert: "CONVERTEȘTE ÎN HEX",
-                titleTransmitter: "Scrie în Hex sau apasă tastele pentru a vorbi cu Rocky",
-                hexPlaceholder: "Rocky spune salut",
+                titleTransmitter: "Scrie în Hex sau apasă tastele pentru a le converti in sunet",
+                hexPlaceholder: "Incearca sa scrii Salut",
                 btnTransmit: "TRANSMITE ȘIR",
                 notesLabel: "Codare Binară: 1200Hz (0) și 2400Hz (1) Semnal Pătrat",
                 titleOscilloscope: "Osciloscop Semnal",
