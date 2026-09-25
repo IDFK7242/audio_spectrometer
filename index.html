@@ -282,13 +282,34 @@
             let text = document.getElementById('hexInput').value.toUpperCase().replace(/[^0-9A-F]/g, '');
             let audioCtx = initTxAudio();
 
-            // HARDWARE WAKEUP PADDING:
-            // Give the OS 1.0 full second to turn on the speakers and mic before sending data
-            let time = audioCtx.currentTime + 1.0;
+            let time = audioCtx.currentTime + 0.1;
 
+            // --- SACRIFICIAL WAKEUP TONE ---
+            // A pure 1800Hz sine wave to open the OS audio gate and settle the mic AGC.
+            // Python ignores it because it doesn't hit the 1200/2400 FSK bins.
+            let syncOsc = audioCtx.createOscillator();
+            let syncGain = audioCtx.createGain();
+            syncOsc.type = 'sine';
+            syncOsc.frequency.setValueAtTime(1800, time);
+
+            syncGain.gain.setValueAtTime(0, time);
+            syncGain.gain.linearRampToValueAtTime(0.2, time + 0.1);
+            syncGain.gain.setValueAtTime(0.2, time + 0.4);
+            syncGain.gain.linearRampToValueAtTime(0, time + 0.5);
+
+            syncOsc.connect(syncGain);
+            syncGain.connect(txAnalyser);
+
+            syncOsc.start(time);
+            syncOsc.stop(time + 0.5);
+
+            // 0.5s tone + 0.2s silence gap before the real data hits
+            time += 0.7;
+
+            // --- ACTUAL DATA TRANSMISSION ---
             for (let char of text) {
                 playBinarySquare(char, audioCtx, time);
-                // 1.7s total spacing (1.2s char + 0.5s inter-character gap)
+                // 1.2s char + 0.5s inter-character gap
                 time += 1.7;
             }
         }
