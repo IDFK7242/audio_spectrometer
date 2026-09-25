@@ -284,8 +284,8 @@
             let time = audioCtx.currentTime + 0.05;
             for (let char of text) {
                 playBinarySquare(char, audioCtx, time);
-                // 4 bits * 0.25s = 1.0s duration per hex character, plus 0.1s silence gap
-                time += 1.1;
+                // 1.0s duration per hex character + 0.5s silence gap to let room echo die
+                time += 1.5;
             }
         }
 
