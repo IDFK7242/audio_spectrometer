@@ -48,9 +48,10 @@ flowchart LR
    - Select the same **Acoustic Profile & Modulation Mode** shown on the professor's screen (check the colored badge at the top).
    - Turn phone volume to ~70–80%, point the speaker toward the professor's microphone, and press **TRANSMIT / SING MESSAGE**.
    - Tap **STOP TRANSMISSION** anytime to cancel.
-4. **Hide an Image Inside Sound (Spectrogram Art):**
-   - Upload a PNG/JPG image, choose **Phone (Fast)** or **Presentation (High Quality)**, and press **GENERATE SPECTROGRAM AUDIO**.
-   - Play the generated audio while the professor's app is in **Full Visualizer Mode** to watch the picture appear in the spectrogram!
+4. **Photo-to-Sound Spectrogram Studio (Hide Pictures & Drawings Inside Sound):**
+   - Choose one of 3 creative tabs: **Photo** (upload PNG/JPG/WebP), **Finger Draw** (doodle with your finger or tap quick stamps: ♥, ★, 🚀, ☺), or **Text Art** (paint a short word directly in sound waves).
+   - Pick a processing style (**Brightness**, **Edge Sketch** for real photos/selfies, or **High Contrast**), adjust **Contrast / Invert / Duration**, and check the **Live `magma` Preview** before generating.
+   - Press **GENERATE SPECTROGRAM AUDIO** (powered by fast in-browser Radix-2 iFFT + 75% Hann Overlap-Add), watch the sweeping playhead while playing toward the professor's microphone in **Full Visualizer Mode**, or tap **DOWNLOAD .WAV SOUVENIR** to save your sound-picture!
 5. **Live Mobile Spectrometer:**
    - Use the built-in microphone spectrogram on your own phone to see voices, whistles, bird songs, and hidden images in real time. Use the **Frequency Range** selector (`0–8 kHz`, `0–10 kHz`, `Full`) to zoom in on the active band.
 
@@ -81,7 +82,7 @@ python3 ui.py
   When students open it, their phones automatically match your profile, modulation mode, and language.
 - **Projector Mode:** Check **Projector Font** to enlarge decoded student messages for visibility from the back of the classroom.
 - **Back-to-Back Student Messages:** After ~1.5 seconds of silence, each decoded message is automatically archived into the message log and the receiver resets for the next student—no need to click **Clear Messages** between every student!
-- **Image Spectrogram Demos:** Switch to **Full Visualizer Mode** (`0–10 kHz`) when students play Image-to-Spectrogram audio.
+- **Image Spectrogram Demos:** Switch to **Full Visualizer Mode** (`0–10 kHz`) when students play Photo-to-Sound audio, and click **Freeze Spectrogram** right after the picture finishes drawing so the whole class can admire it on the projector!
 
 ---
 

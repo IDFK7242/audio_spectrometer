@@ -209,6 +209,145 @@
         }
         audio { width: 100%; margin-top: 12px; outline: none; }
 
+        /* Photo-to-Sound Studio */
+        .studio-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .studio-tab {
+            flex: 1;
+            margin: 0;
+            padding: 8px 6px;
+            font-size: 13px;
+            background: #242424;
+            color: #aaa;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+        }
+        .studio-tab.active {
+            background: #00adb5;
+            color: #fff;
+            border-color: #00e5ff;
+        }
+        .studio-pane { display: none; }
+        .studio-pane.active { display: block; }
+        #drawCanvas {
+            width: 100%;
+            height: 150px;
+            background: #000;
+            border: 1px solid #00adb5;
+            border-radius: 4px;
+            display: block;
+            touch-action: none;
+            cursor: crosshair;
+        }
+        .draw-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        .mini-btn {
+            width: auto;
+            margin: 0;
+            padding: 6px 10px;
+            font-size: 12px;
+            background: #2a2a2a;
+            color: #ddd;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+        .mini-btn.active-tool {
+            background: #00adb5;
+            color: #fff;
+            border-color: #00e5ff;
+        }
+        .studio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            text-align: left;
+            background: #222;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            margin: 12px 0;
+            font-size: 12px;
+        }
+        .studio-grid label {
+            display: block;
+            color: #bbb;
+            margin-bottom: 4px;
+        }
+        .studio-grid select, .studio-grid input[type="range"] {
+            width: 100%;
+            margin: 0;
+            padding: 6px;
+            font-size: 12px;
+        }
+        .studio-grid input[type="range"] {
+            padding: 0;
+            accent-color: #00adb5;
+        }
+        .studio-check-row {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .studio-check-row input[type="checkbox"] {
+            accent-color: #00adb5;
+            width: 16px;
+            height: 16px;
+        }
+        .preview-wrap {
+            position: relative;
+            width: 100%;
+            height: 140px;
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0 4px 0;
+        }
+        #imgPreviewCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            image-rendering: pixelated;
+        }
+        #imgPlayhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 2px;
+            background: #00e5ff;
+            box-shadow: 0 0 6px #00e5ff;
+            display: none;
+            pointer-events: none;
+        }
+        .preview-caption {
+            font-size: 11px;
+            color: #888;
+            margin: 4px 0 8px 0;
+        }
+        .download-link {
+            display: none;
+            margin-top: 10px;
+            padding: 10px 16px;
+            background: #2b3a3c;
+            color: #00e5ff;
+            border: 1px solid #00adb5;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .download-link:hover { background: #1f4548; }
+
         .spectro-controls {
             display: flex;
             gap: 8px;
@@ -260,7 +399,7 @@
     <!-- UNIFIED CLASSIC & BIRD TRANSMITTER -->
     <div class="section">
         <p class="section-title" data-translate="titleProfile">Select Mode &amp; Acoustic Profile</p>
-        <select id="profileSelect" onchange="updateProfileUI()">
+        <select id="profileSelect" onchange="updateProfileUI(true)">
             <optgroup id="optGroupClassic" label="Classic Digital Mode">
                 <option value="classic">Classic Robot (2.4 &amp; 3.0 kHz Square)</option>
             </optgroup>
@@ -274,15 +413,15 @@
 
         <div class="radio-group">
             <label id="lblMod16">
-                <input type="radio" name="modMode" value="16fsk" onchange="updateProfileUI()">
+                <input type="radio" name="modMode" value="16fsk" onchange="updateProfileUI(true)">
                 <span data-translate="modMode16">16-FSK Quiet Room (16 Notes - Ultra Fast &amp; Melodic)</span>
             </label>
             <label id="lblMod4">
-                <input type="radio" name="modMode" value="4fsk" checked onchange="updateProfileUI()">
+                <input type="radio" name="modMode" value="4fsk" checked onchange="updateProfileUI(true)">
                 <span data-translate="modMode4">4-FSK Bird Song (4 Notes - Balanced)</span>
             </label>
             <label id="lblMod2">
-                <input type="radio" name="modMode" value="2fsk" onchange="updateProfileUI()">
+                <input type="radio" name="modMode" value="2fsk" onchange="updateProfileUI(true)">
                 <span data-translate="modMode2">2-FSK Noise-Safe (2 Notes - Classroom Resistant)</span>
             </label>
         </div>
@@ -307,25 +446,82 @@
         <canvas id="oscCanvas" width="500" height="100" style="width:100%; height:100px; background:#000; border: 1px solid #333; border-radius: 4px; display: block; margin: 0 auto;"></canvas>
     </div>
 
-    <!-- IMAGE TO SPECTROGRAM -->
+    <!-- PHOTO-TO-SOUND SPECTROGRAM STUDIO -->
     <div class="section">
-        <p class="section-title" data-translate="titleUpload">Upload Image for Spectrogram Audio</p>
+        <p class="section-title" data-translate="titleUpload">Photo-to-Sound Spectrogram Studio</p>
 
-        <div class="radio-group">
-            <label>
-                <input type="radio" name="txMode" value="phone" checked>
-                <span data-translate="txModePhone">Phone to Phone Mode (Fast)</span>
-            </label>
-            <label>
-                <input type="radio" name="txMode" value="pc">
-                <span data-translate="txModePC">Presentation Mode (High Quality)</span>
-            </label>
+        <div class="studio-tabs">
+            <button id="tabBtnUpload" class="studio-tab active" onclick="setStudioTab('upload')" data-translate="tabUpload">Photo</button>
+            <button id="tabBtnDraw" class="studio-tab" onclick="setStudioTab('draw')" data-translate="tabDraw">Finger Draw</button>
+            <button id="tabBtnText" class="studio-tab" onclick="setStudioTab('text')" data-translate="tabText">Text Art</button>
         </div>
 
-        <input type="file" id="imageInput" accept="image/png, image/jpeg, image/webp">
-        <button id="uploadBtn" onclick="uploadImage()" data-translate="btnUpload">GENERATE SPECTROGRAM AUDIO</button>
+        <!-- Tab 1: Upload Photo -->
+        <div id="studioPaneUpload" class="studio-pane active">
+            <input type="file" id="imageInput" accept="image/png, image/jpeg, image/webp" onchange="onImageFileSelected()">
+        </div>
+
+        <!-- Tab 2: Finger-Draw Pad & Quick Stamps -->
+        <div id="studioPaneDraw" class="studio-pane">
+            <canvas id="drawCanvas" width="280" height="140"></canvas>
+            <div class="draw-toolbar">
+                <button id="btnBrushThin" class="mini-btn" onclick="setBrushSize(4)" data-translate="btnBrushThin">Thin</button>
+                <button id="btnBrushThick" class="mini-btn active-tool" onclick="setBrushSize(10)" data-translate="btnBrushThick">Thick</button>
+                <button class="mini-btn" onclick="drawStamp('heart')" title="Heart">♥</button>
+                <button class="mini-btn" onclick="drawStamp('star')" title="Star">★</button>
+                <button class="mini-btn" onclick="drawStamp('rocket')" title="Rocket">🚀</button>
+                <button class="mini-btn" onclick="drawStamp('smiley')" title="Smiley">☺</button>
+                <button class="mini-btn" onclick="clearDrawPad()" data-translate="btnClearPad">Clear</button>
+            </div>
+        </div>
+
+        <!-- Tab 3: Text-to-Spectrogram Banner -->
+        <div id="studioPaneText" class="studio-pane">
+            <input type="text" id="bannerTextInput" value="SALUT" maxlength="16" placeholder="SALUT" data-placeholder="bannerPlaceholder" oninput="refreshStudioPreview()">
+        </div>
+
+        <!-- Image Prep Controls -->
+        <div class="studio-grid">
+            <div>
+                <label for="imgPrepMode" data-translate="lblPrepMode">Style:</label>
+                <select id="imgPrepMode" onchange="refreshStudioPreview()">
+                    <option value="luminance" selected>Brightness</option>
+                    <option value="edges">Edge Sketch (Photos)</option>
+                    <option value="silhouette">High Contrast</option>
+                </select>
+            </div>
+            <div>
+                <label for="imgDuration"><span data-translate="lblDuration">Duration</span>: <span id="lblDurationVal">6</span>s</label>
+                <input type="range" id="imgDuration" min="3" max="10" step="1" value="6" oninput="document.getElementById('lblDurationVal').innerText = this.value">
+            </div>
+            <div>
+                <label for="imgGamma"><span data-translate="lblContrast">Contrast</span>: <span id="lblGammaVal">2.2</span></label>
+                <input type="range" id="imgGamma" min="1.0" max="3.5" step="0.1" value="2.2" oninput="document.getElementById('lblGammaVal').innerText = this.value; refreshStudioPreview();">
+            </div>
+            <div>
+                <label for="imgBandMode" data-translate="lblBandMode">Quality &amp; Band:</label>
+                <select id="imgBandMode">
+                    <option value="phone" selected>Phone (300 - 7.5 kHz)</option>
+                    <option value="pc">Projector (300 - 9.5 kHz)</option>
+                </select>
+            </div>
+            <div class="studio-check-row">
+                <input type="checkbox" id="imgInvert" onchange="refreshStudioPreview()">
+                <label for="imgInvert" style="margin: 0; cursor: pointer;" data-translate="lblInvert">Invert Colors (for dark drawings on white paper)</label>
+            </div>
+        </div>
+
+        <!-- Live Magma Spectrogram Preview -->
+        <div class="preview-wrap">
+            <canvas id="imgPreviewCanvas" width="240" height="120"></canvas>
+            <div id="imgPlayhead"></div>
+        </div>
+        <div class="preview-caption" data-translate="previewCaption">Live Spectrogram Preview (what the professor's screen will show)</div>
+
+        <button id="uploadBtn" onclick="generateStudioAudio()" data-translate="btnUpload">GENERATE SPECTROGRAM AUDIO</button>
         <div id="statusMessage"></div>
         <audio id="audioPlayer" controls style="display: none;"></audio>
+        <a id="downloadWavLink" class="download-link" download="spectrogram_art.wav" data-translate="btnDownloadWav">DOWNLOAD .WAV SOUVENIR</a>
     </div>
 
     <!-- LIVE MOBILE SPECTROMETER -->
@@ -568,15 +764,32 @@
                 btnStopTx: "STOP TRANSMISSION",
                 padLabel: "Tap to test individual notes:",
                 titleOscilloscope: "Signal Oscilloscope",
-                titleUpload: "Upload Image for Spectrogram Audio",
-                txModePhone: "Phone to Phone Mode (Fast)",
-                txModePC: "Presentation Mode (High Quality)",
+                titleUpload: "Photo-to-Sound Spectrogram Studio",
+                tabUpload: "Photo",
+                tabDraw: "Finger Draw",
+                tabText: "Text Art",
+                btnBrushThin: "Thin",
+                btnBrushThick: "Thick",
+                btnClearPad: "Clear",
+                bannerPlaceholder: "Type short word (e.g. SALUT)",
+                lblPrepMode: "Style:",
+                prepLuminance: "Brightness",
+                prepEdges: "Edge Sketch (Photos)",
+                prepSilhouette: "High Contrast",
+                lblDuration: "Duration",
+                lblContrast: "Contrast",
+                lblBandMode: "Quality & Band:",
+                bandPhone: "Phone (300 - 7.5 kHz)",
+                bandPC: "Projector (300 - 9.5 kHz)",
+                lblInvert: "Invert Colors (for dark drawings on white paper)",
+                previewCaption: "Live Spectrogram Preview (what the professor's screen will show)",
                 btnUpload: "GENERATE SPECTROGRAM AUDIO",
-                alertNoFile: "Please select an image first!",
+                btnDownloadWav: "DOWNLOAD .WAV SOUVENIR",
+                alertNoFile: "Please select an image first (or switch to Finger Draw / Text Art)!",
                 alertBadFile: "Could not load that image file. Please try a PNG or JPG.",
                 alertEmptyHex: "Enter text or valid Hex digits (0-9, A-F) first!",
                 statusReady: "Ready! Press Play below.",
-                statusProcessing: "Processing locally...",
+                statusProcessing: "Synthesizing audio (iFFT)...",
                 normHint: "Romanian diacritics / special characters were converted to ASCII.",
                 txWakeup: "Waking up receiver...",
                 txSending: "Sending",
@@ -609,15 +822,32 @@
                 btnStopTx: "OPREȘTE TRANSMISIA",
                 padLabel: "Apasă pentru a testa notele individuale:",
                 titleOscilloscope: "Osciloscop Semnal",
-                titleUpload: "Încarcă Imagine pentru Audio Spectrogramă",
-                txModePhone: "Mod Telefon (Rapid)",
-                txModePC: "Mod Prezentare (Calitate Înaltă)",
+                titleUpload: "Studio Foto-în-Sunet (Spectrogramă)",
+                tabUpload: "Poză",
+                tabDraw: "Desenează",
+                tabText: "Text Artă",
+                btnBrushThin: "Subțire",
+                btnBrushThick: "Gros",
+                btnClearPad: "Șterge",
+                bannerPlaceholder: "Scrie un cuvânt scurt (ex. SALUT)",
+                lblPrepMode: "Stil:",
+                prepLuminance: "Luminozitate",
+                prepEdges: "Contur / Schiță (Poze)",
+                prepSilhouette: "Contrast Ridicat",
+                lblDuration: "Durată",
+                lblContrast: "Contrast",
+                lblBandMode: "Calitate & Bandă:",
+                bandPhone: "Telefon (300 - 7.5 kHz)",
+                bandPC: "Proiector (300 - 9.5 kHz)",
+                lblInvert: "Inversează Culorile (desene pe foaie albă)",
+                previewCaption: "Previzualizare Live (ce va apărea pe ecranul profesorului)",
                 btnUpload: "GENEREAZĂ AUDIO SPECTROGRAMĂ",
-                alertNoFile: "Vă rugăm să selectați o imagine mai întâi!",
+                btnDownloadWav: "DESCARCĂ .WAV AMINTIRE",
+                alertNoFile: "Selectează o imagine mai întâi (sau treci pe Desenează / Text Artă)!",
                 alertBadFile: "Imaginea nu a putut fi încărcată. Încearcă un PNG sau JPG.",
                 alertEmptyHex: "Introdu un text sau cod Hex valid (0-9, A-F) mai întâi!",
                 statusReady: "Gata! Apasă Play mai jos.",
-                statusProcessing: "Se procesează local...",
+                statusProcessing: "Se sintetizează sunetul (iFFT)...",
                 normHint: "Diacriticele românești / caracterele speciale au fost convertite în ASCII.",
                 txWakeup: "Se trezește receptorul...",
                 txSending: "Se transmite",
@@ -657,7 +887,10 @@
             return Array.from({ length: 16 }, (_, i) => Math.round(f0 + i * step));
         }
 
-        function updateProfileUI() {
+        function updateProfileUI(stopActiveTx = false) {
+            if (stopActiveTx && isTransmitting) {
+                stopTransmission(true);
+            }
             const key = getActiveProfileKey();
             const profile = getActiveProfile();
             const supported = profile.supportedModes || ['2fsk'];
@@ -769,11 +1002,20 @@
                 }
             });
 
-            // Localize spectrometer range options
+            // Localize spectrometer & studio select options
             const rangeSel = document.getElementById('spectroRangeSelect');
             rangeSel.options[0].text = translations[lang].range8k;
             rangeSel.options[1].text = translations[lang].range10k;
             rangeSel.options[2].text = translations[lang].rangeFull;
+
+            const prepSel = document.getElementById('imgPrepMode');
+            prepSel.options[0].text = translations[lang].prepLuminance;
+            prepSel.options[1].text = translations[lang].prepEdges;
+            prepSel.options[2].text = translations[lang].prepSilhouette;
+
+            const bandSel = document.getElementById('imgBandMode');
+            bandSel.options[0].text = translations[lang].bandPhone;
+            bandSel.options[1].text = translations[lang].bandPC;
 
             // Keep dynamic button labels consistent with running state
             if (isSpectroRunning) {
@@ -881,8 +1123,13 @@
             draw();
         }
 
-        function registerTxNode(node) {
+        function registerTxNode(node, track = true) {
+            if (!track) return;
             activeTxNodes.push(node);
+            node.onended = () => {
+                const idx = activeTxNodes.indexOf(node);
+                if (idx !== -1) activeTxNodes.splice(idx, 1);
+            };
         }
 
         function stopTransmission(resetProgress = true) {
@@ -1158,151 +1405,557 @@
             }
         }
 
-        // --- 100% LOCAL NON-BLOCKING IMAGE-TO-AUDIO ENGINE (NO AUDIOCONTEXT LEAK) ---
+        // --- PHOTO-TO-SOUND SPECTROGRAM STUDIO (RADIX-2 iFFT + 75% HANN OVERLAP-ADD) ---
 
+        let studioTab = 'upload';
+        let uploadedImageEl = null;
         let lastWavObjectUrl = null;
+        let brushSize = 10;
+        let isDrawing = false;
+        let lastDrawPt = null;
+        let playheadReqId = null;
 
-        function uploadImage() {
-            const fileInput = document.getElementById('imageInput');
-            const btn = document.getElementById('uploadBtn');
-            const status = document.getElementById('statusMessage');
-            const audio = document.getElementById('audioPlayer');
-            const modeSelect = document.querySelector('input[name="txMode"]:checked').value;
+        function setStudioTab(tab) {
+            studioTab = tab;
+            ['upload', 'draw', 'text'].forEach(t => {
+                const cap = t.charAt(0).toUpperCase() + t.slice(1);
+                document.getElementById('tabBtn' + cap).classList.toggle('active', t === tab);
+                document.getElementById('studioPane' + cap).classList.toggle('active', t === tab);
+            });
+            refreshStudioPreview();
+        }
 
-            if (!fileInput.files[0]) {
-                alert(translations[currentLang].alertNoFile);
-                return;
+        function setBrushSize(sz) {
+            brushSize = sz;
+            document.getElementById('btnBrushThin').classList.toggle('active-tool', sz <= 5);
+            document.getElementById('btnBrushThick').classList.toggle('active-tool', sz > 5);
+        }
+
+        function initDrawPad() {
+            const canvas = document.getElementById('drawCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            function getPos(evt) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+                const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+                return {
+                    x: (clientX - rect.left) * (canvas.width / rect.width),
+                    y: (clientY - rect.top) * (canvas.height / rect.height)
+                };
             }
 
-            btn.disabled = true;
-            status.innerText = `${translations[currentLang].statusProcessing} 0%`;
-            audio.style.display = "none";
-            audio.src = "";
+            function startDraw(evt) {
+                evt.preventDefault();
+                isDrawing = true;
+                lastDrawPt = getPos(evt);
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(lastDrawPt.x, lastDrawPt.y, brushSize / 2, 0, Math.PI * 2);
+                ctx.fill();
+                refreshStudioPreview();
+            }
 
-            const file = fileInput.files[0];
-            const imgUrl = URL.createObjectURL(file);
+            function moveDraw(evt) {
+                if (!isDrawing) return;
+                evt.preventDefault();
+                const pt = getPos(evt);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = brushSize;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                ctx.moveTo(lastDrawPt.x, lastDrawPt.y);
+                ctx.lineTo(pt.x, pt.y);
+                ctx.stroke();
+                lastDrawPt = pt;
+                refreshStudioPreview();
+            }
+
+            function endDraw() {
+                if (!isDrawing) return;
+                isDrawing = false;
+                lastDrawPt = null;
+                refreshStudioPreview();
+            }
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', moveDraw);
+            window.addEventListener('mouseup', endDraw);
+            canvas.addEventListener('touchstart', startDraw, { passive: false });
+            canvas.addEventListener('touchmove', moveDraw, { passive: false });
+            window.addEventListener('touchend', endDraw);
+        }
+
+        function clearDrawPad() {
+            const canvas = document.getElementById('drawCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            refreshStudioPreview();
+        }
+
+        function drawStamp(kind) {
+            const canvas = document.getElementById('drawCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, w, h);
+            ctx.strokeStyle = '#fff';
+            ctx.fillStyle = '#fff';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            const cx = w / 2;
+            const cy = h / 2;
+
+            if (kind === 'heart') {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + 44);
+                ctx.bezierCurveTo(cx - 70, cy + 4, cx - 55, cy - 54, cx, cy - 18);
+                ctx.bezierCurveTo(cx + 55, cy - 54, cx + 70, cy + 4, cx, cy + 44);
+                ctx.closePath();
+                ctx.stroke();
+            } else if (kind === 'star') {
+                ctx.beginPath();
+                const outerR = 52, innerR = 22;
+                for (let i = 0; i < 10; i++) {
+                    const r = i % 2 === 0 ? outerR : innerR;
+                    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+                    const x = cx + Math.cos(a) * r;
+                    const y = cy + Math.sin(a) * r;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            } else if (kind === 'rocket') {
+                // Horizontal rocket pointing right across spectrogram time axis
+                ctx.beginPath();
+                ctx.moveTo(cx - 55, cy - 18);
+                ctx.lineTo(cx + 25, cy - 18);
+                ctx.quadraticCurveTo(cx + 62, cy, cx + 25, cy + 18);
+                ctx.lineTo(cx - 55, cy + 18);
+                ctx.closePath();
+                ctx.stroke();
+                // Fins
+                ctx.beginPath();
+                ctx.moveTo(cx - 45, cy - 18); ctx.lineTo(cx - 65, cy - 38); ctx.lineTo(cx - 25, cy - 18);
+                ctx.moveTo(cx - 45, cy + 18); ctx.lineTo(cx - 65, cy + 38); ctx.lineTo(cx - 25, cy + 18);
+                ctx.stroke();
+                // Window
+                ctx.beginPath();
+                ctx.arc(cx + 5, cy, 8, 0, Math.PI * 2);
+                ctx.stroke();
+                // Flame
+                ctx.beginPath();
+                ctx.moveTo(cx - 58, cy - 8); ctx.lineTo(cx - 88, cy); ctx.lineTo(cx - 58, cy + 8);
+                ctx.stroke();
+            } else if (kind === 'smiley') {
+                ctx.beginPath();
+                ctx.arc(cx, cy, 48, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(cx - 17, cy - 14, 6, 0, Math.PI * 2);
+                ctx.arc(cx + 17, cy - 14, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cx, cy + 4, 26, 0.15 * Math.PI, 0.85 * Math.PI);
+                ctx.stroke();
+            }
+            refreshStudioPreview();
+        }
+
+        function onImageFileSelected() {
+            const fileInput = document.getElementById('imageInput');
+            if (!fileInput.files[0]) return;
+            const imgUrl = URL.createObjectURL(fileInput.files[0]);
             const img = new Image();
-
             img.onload = () => {
                 URL.revokeObjectURL(imgUrl);
-                processImageToAudioChunked(img, btn, status, audio, modeSelect);
+                uploadedImageEl = img;
+                refreshStudioPreview();
             };
             img.onerror = () => {
                 URL.revokeObjectURL(imgUrl);
-                btn.disabled = false;
-                status.innerText = "";
+                uploadedImageEl = null;
                 alert(translations[currentLang].alertBadFile);
             };
             img.src = imgUrl;
         }
 
-        function processImageToAudioChunked(img, btn, status, audioEl, mode) {
-            const durationSec = 6.0;
-            const sr = 16000;
-            const n_bins = (mode === 'pc') ? 256 : 128;
-            const n_frames = (mode === 'pc') ? 500 : 200;
-
+        function renderSourceToCanvas(width, height) {
             const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            canvas.width = n_frames;
-            canvas.height = n_bins;
-            ctx.drawImage(img, 0, 0, n_frames, n_bins);
-            const imgData = ctx.getImageData(0, 0, n_frames, n_bins).data;
 
-            let r_sum = 0, g_sum = 0, b_sum = 0;
-            const sampleCount = 50;
-            for (let i = 0; i < sampleCount; i++) {
-                const idx = Math.floor(Math.random() * (n_frames * n_bins)) * 4;
-                r_sum += imgData[idx];
-                g_sum += imgData[idx + 1];
-                b_sum += imgData[idx + 2];
-            }
-            const domR = r_sum / sampleCount;
-            const domG = g_sum / sampleCount;
-            const domB = b_sum / sampleCount;
-
-            const maxDist = Math.sqrt(255 * 255 * 3);
-            const totalSamples = Math.floor(durationSec * sr);
-            const channelData = new Float32Array(totalSamples);
-
-            const freqs = new Float32Array(n_bins);
-            const phases = new Float32Array(n_bins);
-            for (let y = 0; y < n_bins; y++) {
-                const flippedY = (n_bins - 1) - y;
-                freqs[flippedY] = 200.0 + (y / n_bins) * (7800.0 - 200.0);
-                phases[flippedY] = Math.random() * 2 * Math.PI;
+            if (studioTab === 'draw') {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(document.getElementById('drawCanvas'), 0, 0, width, height);
+                return canvas;
             }
 
-            const samplesPerFrame = totalSamples / n_frames;
-            const chunkSize = (mode === 'pc') ? 10 : 20;
-            let frameX = 0;
+            if (studioTab === 'text') {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, width, height);
+                const rawText = (document.getElementById('bannerTextInput').value || 'SALUT').trim() || 'SALUT';
+                const { clean } = normalizeToAscii(rawText);
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // Fit font size dynamically to canvas width
+                let fontSize = Math.floor(height * 0.72);
+                ctx.font = `bold ${fontSize}px monospace`;
+                const measured = ctx.measureText(clean).width;
+                if (measured > width * 0.9) {
+                    fontSize = Math.max(12, Math.floor(fontSize * ((width * 0.9) / measured)));
+                    ctx.font = `bold ${fontSize}px monospace`;
+                }
+                ctx.fillText(clean, width / 2, height / 2);
+                return canvas;
+            }
 
-            function processChunk() {
-                const endX = Math.min(frameX + chunkSize, n_frames);
-                const magnitudes = new Float32Array(n_bins);
+            // Upload tab: composite on solid white if inverted else black, preserving aspect ratio
+            const invert = document.getElementById('imgInvert').checked;
+            ctx.fillStyle = invert ? '#fff' : '#000';
+            ctx.fillRect(0, 0, width, height);
+            if (!uploadedImageEl) return null;
 
-                for (let x = frameX; x < endX; x++) {
-                    const startSample = Math.floor(x * samplesPerFrame);
-                    const endSample = Math.floor((x + 1) * samplesPerFrame);
+            const iw = uploadedImageEl.naturalWidth || uploadedImageEl.width;
+            const ih = uploadedImageEl.naturalHeight || uploadedImageEl.height;
+            const scale = Math.min(width / iw, height / ih);
+            const dw = iw * scale;
+            const dh = ih * scale;
+            const dx = (width - dw) / 2;
+            const dy = (height - dh) / 2;
+            ctx.drawImage(uploadedImageEl, dx, dy, dw, dh);
+            return canvas;
+        }
 
-                    for (let y = 0; y < n_bins; y++) {
-                        const idx = (y * n_frames + x) * 4;
-                        const dr = imgData[idx] - domR;
-                        const dg = imgData[idx + 1] - domG;
-                        const db = imgData[idx + 2] - domB;
-                        const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-                        let M = dist / maxDist;
-                        if (M < 0.1) M = 0;
-                        magnitudes[y] = M;
+        function buildProcessedMatrix(srcCanvas, prepMode, invert, gamma) {
+            const w = srcCanvas.width;
+            const h = srcCanvas.height;
+            const data = srcCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+            const lum = new Float32Array(w * h);
+
+            for (let i = 0; i < w * h; i++) {
+                const p = i * 4;
+                let v = (0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2]) / 255.0;
+                if (invert) v = 1.0 - v;
+                lum[i] = v;
+            }
+
+            const out = new Float32Array(w * h);
+
+            if (prepMode === 'edges') {
+                // 3x3 Sobel edge detector
+                let maxMag = 1e-6;
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        const tl = lum[(y - 1) * w + (x - 1)];
+                        const tc = lum[(y - 1) * w + x];
+                        const tr = lum[(y - 1) * w + (x + 1)];
+                        const ml = lum[y * w + (x - 1)];
+                        const mr = lum[y * w + (x + 1)];
+                        const bl = lum[(y + 1) * w + (x - 1)];
+                        const bc = lum[(y + 1) * w + x];
+                        const br = lum[(y + 1) * w + (x + 1)];
+                        const gx = -tl + tr - 2 * ml + 2 * mr - bl + br;
+                        const gy = -tl - 2 * tc - tr + bl + 2 * bc + br;
+                        const mag = Math.sqrt(gx * gx + gy * gy);
+                        out[y * w + x] = mag;
+                        if (mag > maxMag) maxMag = mag;
                     }
+                }
+                for (let i = 0; i < out.length; i++) {
+                    let v = out[i] / maxMag;
+                    v = Math.pow(v, Math.max(0.8, gamma * 0.65));
+                    out[i] = v < 0.08 ? 0 : v;
+                }
+            } else if (prepMode === 'silhouette') {
+                // Auto-threshold using mean luminance
+                let sum = 0;
+                for (let i = 0; i < lum.length; i++) sum += lum[i];
+                const thresh = Math.max(0.18, Math.min(0.82, sum / lum.length));
+                for (let i = 0; i < lum.length; i++) {
+                    out[i] = lum[i] > thresh ? 1.0 : 0.0;
+                }
+            } else {
+                // Luminance with gamma contrast curve
+                for (let i = 0; i < lum.length; i++) {
+                    const v = Math.pow(lum[i], gamma);
+                    out[i] = v < 0.04 ? 0 : v;
+                }
+            }
 
-                    for (let i = startSample; i < endSample; i++) {
-                        const t = i / sr;
-                        let sampleVal = 0;
-                        for (let y = 0; y < n_bins; y++) {
-                            if (magnitudes[y] > 0) {
-                                sampleVal += magnitudes[y] * Math.sin(2 * Math.PI * freqs[y] * t + phases[y]);
-                            }
-                        }
-                        channelData[i] = sampleVal;
+            return { matrix: out, width: w, height: h };
+        }
+
+        function magmaColor(v) {
+            // Smooth approximation of matplotlib/pyqtgraph 'magma' colormap
+            const t = Math.max(0, Math.min(1, v));
+            let r, g, b;
+            if (t < 0.33) {
+                const u = t / 0.33;
+                r = Math.round(u * 80);
+                g = Math.round(u * 18);
+                b = Math.round(u * 123);
+            } else if (t < 0.66) {
+                const u = (t - 0.33) / 0.33;
+                r = Math.round(80 + u * 145);
+                g = Math.round(18 + u * 62);
+                b = Math.round(123 - u * 43);
+            } else {
+                const u = (t - 0.66) / 0.34;
+                r = Math.round(225 + u * 27);
+                g = Math.round(80 + u * 173);
+                b = Math.round(80 + u * 111);
+            }
+            return [r, g, b];
+        }
+
+        function refreshStudioPreview() {
+            const previewCanvas = document.getElementById('imgPreviewCanvas');
+            const pCtx = previewCanvas.getContext('2d');
+            const pw = previewCanvas.width;
+            const ph = previewCanvas.height;
+
+            const srcCanvas = renderSourceToCanvas(pw, ph);
+            if (!srcCanvas) {
+                pCtx.fillStyle = '#000';
+                pCtx.fillRect(0, 0, pw, ph);
+                return;
+            }
+
+            const prepMode = document.getElementById('imgPrepMode').value;
+            const invert = document.getElementById('imgInvert').checked;
+            const gamma = parseFloat(document.getElementById('imgGamma').value);
+            const { matrix } = buildProcessedMatrix(srcCanvas, prepMode, invert, gamma);
+
+            const imgData = pCtx.createImageData(pw, ph);
+            for (let i = 0; i < pw * ph; i++) {
+                const [r, g, b] = magmaColor(matrix[i]);
+                const p = i * 4;
+                imgData.data[p] = r;
+                imgData.data[p + 1] = g;
+                imgData.data[p + 2] = b;
+                imgData.data[p + 3] = 255;
+            }
+            pCtx.putImageData(imgData, 0, 0);
+        }
+
+        // Pure Radix-2 in-place FFT / iFFT (N must be power of 2)
+        function radix2FFT(re, im, inverse) {
+            const n = re.length;
+            let j = 0;
+            for (let i = 1; i < n; i++) {
+                let bit = n >> 1;
+                for (; j & bit; bit >>= 1) j ^= bit;
+                j ^= bit;
+                if (i < j) {
+                    let tmp = re[i]; re[i] = re[j]; re[j] = tmp;
+                    tmp = im[i]; im[i] = im[j]; im[j] = tmp;
+                }
+            }
+            const sign = inverse ? 1 : -1;
+            for (let len = 2; len <= n; len <<= 1) {
+                const half = len >> 1;
+                const ang = (sign * 2 * Math.PI) / len;
+                const wLenRe = Math.cos(ang);
+                const wLenIm = Math.sin(ang);
+                for (let i = 0; i < n; i += len) {
+                    let wRe = 1.0, wIm = 0.0;
+                    for (let k = 0; k < half; k++) {
+                        const uRe = re[i + k], uIm = im[i + k];
+                        const vRe = re[i + k + half] * wRe - im[i + k + half] * wIm;
+                        const vIm = re[i + k + half] * wIm + im[i + k + half] * wRe;
+                        re[i + k] = uRe + vRe;
+                        im[i + k] = uIm + vIm;
+                        re[i + k + half] = uRe - vRe;
+                        im[i + k + half] = uIm - vIm;
+                        const nextWRe = wRe * wLenRe - wIm * wLenIm;
+                        wIm = wRe * wLenIm + wIm * wLenRe;
+                        wRe = nextWRe;
+                    }
+                }
+            }
+            if (inverse) {
+                const invN = 1.0 / n;
+                for (let i = 0; i < n; i++) {
+                    re[i] *= invN;
+                    im[i] *= invN;
+                }
+            }
+        }
+
+        function synthesizeMatrixToFloat32(matrix, imgW, imgH, opts) {
+            const sr = opts.sr || 22050;
+            const durationSec = opts.durationSec || 6.0;
+            const nfft = opts.nfft || 1024;
+            const fMin = opts.fMin || 300.0;
+            const fMax = opts.fMax || 7500.0;
+
+            const hop = nfft >> 2; // 75% overlap (Hann COLA)
+            const totalSamples = Math.max(nfft, Math.floor(durationSec * sr));
+            const numFrames = Math.max(1, Math.floor((totalSamples - nfft) / hop) + 1);
+            const out = new Float32Array(totalSamples);
+
+            const hann = new Float32Array(nfft);
+            for (let n = 0; n < nfft; n++) {
+                hann[n] = 0.5 * (1.0 - Math.cos((2.0 * Math.PI * n) / nfft));
+            }
+
+            const binHz = sr / nfft;
+            const minBin = Math.max(1, Math.floor(fMin / binHz));
+            const maxBin = Math.min((nfft >> 1) - 1, Math.floor(fMax / binHz));
+            const binSpan = Math.max(1, maxBin - minBin);
+
+            // Deterministic pseudo-random phase per bin (avoids peaky impulse trains)
+            const phases = new Float32Array(nfft >> 1);
+            let seed = 1337;
+            for (let k = 0; k < phases.length; k++) {
+                seed = (seed * 1664525 + 1013904223) >>> 0;
+                phases[k] = (seed / 4294967296) * 2.0 * Math.PI;
+            }
+
+            const re = new Float32Array(nfft);
+            const im = new Float32Array(nfft);
+
+            for (let fIdx = 0; fIdx < numFrames; fIdx++) {
+                re.fill(0);
+                im.fill(0);
+                const x = Math.min(imgW - 1, Math.floor((fIdx / Math.max(1, numFrames - 1)) * (imgW - 1)));
+
+                for (let k = minBin; k <= maxBin; k++) {
+                    const normFreq = (k - minBin) / binSpan; // 0 = bottom (fMin), 1 = top (fMax)
+                    const y = Math.min(imgH - 1, Math.max(0, Math.round((1.0 - normFreq) * (imgH - 1))));
+                    const mag = matrix[y * imgW + x];
+                    if (mag > 0) {
+                        // Advance phase coherently by frame hop so tones stay crisp without warble
+                        const phi = phases[k] + (2.0 * Math.PI * k * fIdx * hop) / nfft;
+                        const c = mag * Math.cos(phi);
+                        const s = mag * Math.sin(phi);
+                        re[k] = c;
+                        im[k] = s;
+                        re[nfft - k] = c;
+                        im[nfft - k] = -s;
                     }
                 }
 
-                frameX = endX;
-                const pct = Math.round((frameX / n_frames) * 100);
-                status.innerText = `${translations[currentLang].statusProcessing} ${pct}%`;
+                radix2FFT(re, im, true);
 
-                if (frameX < n_frames) {
-                    setTimeout(processChunk, 0);
+                const offset = fIdx * hop;
+                for (let n = 0; n < nfft && offset + n < totalSamples; n++) {
+                    out[offset + n] += re[n] * hann[n];
+                }
+            }
+
+            // Peak normalize & apply gentle 30ms fade-in/fade-out
+            let maxAmp = 0;
+            for (let i = 0; i < totalSamples; i++) {
+                const a = Math.abs(out[i]);
+                if (a > maxAmp) maxAmp = a;
+            }
+            if (maxAmp > 0) {
+                const scale = 0.9 / maxAmp;
+                for (let i = 0; i < totalSamples; i++) out[i] *= scale;
+            }
+            const fadeSamples = Math.min(Math.floor(totalSamples / 4), Math.floor(0.03 * sr));
+            for (let i = 0; i < fadeSamples; i++) {
+                const w = i / fadeSamples;
+                out[i] *= w;
+                out[totalSamples - 1 - i] *= w;
+            }
+            return out;
+        }
+
+        function generateStudioAudio() {
+            const btn = document.getElementById('uploadBtn');
+            const status = document.getElementById('statusMessage');
+            const audioEl = document.getElementById('audioPlayer');
+            const dlLink = document.getElementById('downloadWavLink');
+
+            if (studioTab === 'upload' && !uploadedImageEl) {
+                alert(translations[currentLang].alertNoFile);
+                return;
+            }
+
+            const bandMode = document.getElementById('imgBandMode').value;
+            const durationSec = parseFloat(document.getElementById('imgDuration').value) || 6.0;
+            const prepMode = document.getElementById('imgPrepMode').value;
+            const invert = document.getElementById('imgInvert').checked;
+            const gamma = parseFloat(document.getElementById('imgGamma').value);
+
+            const sr = 22050;
+            const nfft = bandMode === 'pc' ? 2048 : 1024;
+            const fMin = 300.0;
+            const fMax = bandMode === 'pc' ? 9500.0 : 7500.0;
+            const imgW = bandMode === 'pc' ? 400 : 260;
+            const imgH = bandMode === 'pc' ? 256 : 160;
+
+            btn.disabled = true;
+            status.innerText = translations[currentLang].statusProcessing;
+            audioEl.style.display = 'none';
+            dlLink.style.display = 'none';
+
+            setTimeout(() => {
+                try {
+                    const t0 = performance.now();
+                    const srcCanvas = renderSourceToCanvas(imgW, imgH);
+                    const { matrix, width, height } = buildProcessedMatrix(srcCanvas, prepMode, invert, gamma);
+                    const samples = synthesizeMatrixToFloat32(matrix, width, height, {
+                        sr, durationSec, nfft, fMin, fMax
+                    });
+
+                    if (lastWavObjectUrl) URL.revokeObjectURL(lastWavObjectUrl);
+                    const wavBlob = float32ToWav(samples, sr);
+                    lastWavObjectUrl = URL.createObjectURL(wavBlob);
+
+                    const elapsedMs = Math.round(performance.now() - t0);
+                    status.innerText = `${translations[currentLang].statusReady} (${elapsedMs}ms)`;
+                    audioEl.src = lastWavObjectUrl;
+                    audioEl.style.display = 'block';
+                    dlLink.href = lastWavObjectUrl;
+                    dlLink.style.display = 'inline-block';
+                } finally {
+                    btn.disabled = false;
+                }
+            }, 20);
+        }
+
+        function bindPlayheadSync() {
+            const audioEl = document.getElementById('audioPlayer');
+            const playhead = document.getElementById('imgPlayhead');
+
+            function updatePlayhead() {
+                if (audioEl.paused || audioEl.ended || !audioEl.duration) {
+                    playhead.style.display = 'none';
                     return;
                 }
-
-                // Normalize & encode WAV directly without creating an AudioContext
-                let maxAmp = 0;
-                for (let i = 0; i < totalSamples; i++) {
-                    const a = Math.abs(channelData[i]);
-                    if (a > maxAmp) maxAmp = a;
-                }
-                if (maxAmp > 0) {
-                    const scale = 0.9 / maxAmp;
-                    for (let i = 0; i < totalSamples; i++) {
-                        channelData[i] *= scale;
-                    }
-                }
-
-                if (lastWavObjectUrl) {
-                    URL.revokeObjectURL(lastWavObjectUrl);
-                }
-                const wavBlob = float32ToWav(channelData, sr);
-                lastWavObjectUrl = URL.createObjectURL(wavBlob);
-
-                status.innerText = translations[currentLang].statusReady;
-                audioEl.src = lastWavObjectUrl;
-                audioEl.style.display = "block";
-                btn.disabled = false;
+                const pct = Math.max(0, Math.min(100, (audioEl.currentTime / audioEl.duration) * 100));
+                playhead.style.display = 'block';
+                playhead.style.left = `${pct}%`;
+                playheadReqId = requestAnimationFrame(updatePlayhead);
             }
 
-            setTimeout(processChunk, 10);
+            audioEl.addEventListener('play', () => {
+                cancelAnimationFrame(playheadReqId);
+                playheadReqId = requestAnimationFrame(updatePlayhead);
+            });
+            audioEl.addEventListener('pause', () => {
+                cancelAnimationFrame(playheadReqId);
+                playhead.style.display = 'none';
+            });
+            audioEl.addEventListener('ended', () => {
+                cancelAnimationFrame(playheadReqId);
+                playhead.style.display = 'none';
+            });
         }
 
         function float32ToWav(samples, sr) {
@@ -1345,6 +1998,7 @@
         let spectroStream = null;
         let spectroReqId = null;
         let isSpectroRunning = false;
+        let isSpectroBusy = false;
 
         function getSpectroMaxFreq() {
             const selected = parseInt(document.getElementById('spectroRangeSelect').value, 10);
@@ -1385,67 +2039,73 @@
         }
 
         async function toggleSpectrometer() {
+            if (isSpectroBusy) return;
+            isSpectroBusy = true;
             const btn = document.getElementById('btnSpectro');
             const freqScaleDiv = document.getElementById('freqScale');
 
-            if (isSpectroRunning) {
-                cancelAnimationFrame(spectroReqId);
-                if (spectroMic) { spectroMic.disconnect(); spectroMic = null; }
-                if (analyser) { analyser.disconnect(); analyser = null; }
-                if (spectroStream) {
-                    spectroStream.getTracks().forEach(track => track.stop());
-                    spectroStream = null;
-                }
-                if (spectroAudioCtx) {
-                    await spectroAudioCtx.close().catch(() => {});
-                    spectroAudioCtx = null;
-                }
-
-                isSpectroRunning = false;
-                btn.innerText = translations[currentLang].btnStartSpectro;
-                btn.style.background = "#00adb5";
-                freqScaleDiv.style.display = "none";
-
-                const canvas = document.getElementById('spectroCanvas');
-                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-
-                if (document.fullscreenElement || document.webkitFullscreenElement) {
-                    toggleFullscreen();
-                }
-                return;
-            }
-
             try {
-                spectroStream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false
-                    },
-                    video: false
-                });
-                spectroAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = spectroAudioCtx.createAnalyser();
-                analyser.fftSize = 2048;
-                analyser.smoothingTimeConstant = 0.2;
+                if (isSpectroRunning) {
+                    cancelAnimationFrame(spectroReqId);
+                    if (spectroMic) { spectroMic.disconnect(); spectroMic = null; }
+                    if (analyser) { analyser.disconnect(); analyser = null; }
+                    if (spectroStream) {
+                        spectroStream.getTracks().forEach(track => track.stop());
+                        spectroStream = null;
+                    }
+                    if (spectroAudioCtx) {
+                        await spectroAudioCtx.close().catch(() => {});
+                        spectroAudioCtx = null;
+                    }
 
-                spectroMic = spectroAudioCtx.createMediaStreamSource(spectroStream);
-                spectroMic.connect(analyser);
+                    isSpectroRunning = false;
+                    btn.innerText = translations[currentLang].btnStartSpectro;
+                    btn.style.background = "#00adb5";
+                    freqScaleDiv.style.display = "none";
 
-                isSpectroRunning = true;
-                btn.innerText = translations[currentLang].btnStopSpectro;
-                btn.style.background = "#d9534f";
+                    const canvas = document.getElementById('spectroCanvas');
+                    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
-                buildFreqScale(getSpectroMaxFreq());
-                freqScaleDiv.style.display = "flex";
-
-                drawSpectrogram();
-            } catch (err) {
-                if (spectroStream) {
-                    spectroStream.getTracks().forEach(track => track.stop());
-                    spectroStream = null;
+                    if (document.fullscreenElement || document.webkitFullscreenElement) {
+                        toggleFullscreen();
+                    }
+                    return;
                 }
-                alert(translations[currentLang].errMic);
+
+                try {
+                    spectroStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        },
+                        video: false
+                    });
+                    spectroAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = spectroAudioCtx.createAnalyser();
+                    analyser.fftSize = 2048;
+                    analyser.smoothingTimeConstant = 0.2;
+
+                    spectroMic = spectroAudioCtx.createMediaStreamSource(spectroStream);
+                    spectroMic.connect(analyser);
+
+                    isSpectroRunning = true;
+                    btn.innerText = translations[currentLang].btnStopSpectro;
+                    btn.style.background = "#d9534f";
+
+                    buildFreqScale(getSpectroMaxFreq());
+                    freqScaleDiv.style.display = "flex";
+
+                    drawSpectrogram();
+                } catch (err) {
+                    if (spectroStream) {
+                        spectroStream.getTracks().forEach(track => track.stop());
+                        spectroStream = null;
+                    }
+                    alert(translations[currentLang].errMic);
+                }
+            } finally {
+                isSpectroBusy = false;
             }
         }
 
@@ -1519,8 +2179,17 @@
         }
 
         // Initialize on load
+        initDrawPad();
+        bindPlayheadSync();
+        document.getElementById('plainTextInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') convertToHex();
+        });
+        document.getElementById('hexInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleTransmitClick();
+        });
         applyUrlParams();
         setLanguage(currentLang);
+        refreshStudioPreview();
     </script>
 </body>
 </html>

@@ -248,7 +248,11 @@ class DemodulatorEngine:
                 self.noise_spec = 0.95 * self.noise_spec + 0.05 * S_mag_raw
             self.noise_spec = np.maximum(self.noise_spec, 1e-12)
 
-        S_mag = np.maximum(S_mag_raw - 0.7 * self.noise_spec, 0.05 * self.noise_spec)
+        if self.rx_enabled:
+            S_mag = np.maximum(S_mag_raw - 0.7 * self.noise_spec, 0.05 * self.noise_spec)
+        else:
+            # Preserve subtle grayscale gradients for Photo-to-Sound spectrogram art
+            S_mag = S_mag_raw
         S_db = db(S_mag)
 
         self.spec_data = np.roll(self.spec_data, -1, axis=0)
@@ -485,8 +489,9 @@ class AcousticSpectrometerApp(QMainWindow):
 
         self.current_mode = "RX"
         self.projector_mode = False
+        self.spectro_frozen = False
         self.freq_lines = []
-        self.q_in: queue.Queue = queue.Queue()
+        self.q_in: queue.Queue = queue.Queue(maxsize=100)
         self.stream = None
         self.mic_error_msg = ""
 
@@ -592,11 +597,15 @@ class AcousticSpectrometerApp(QMainWindow):
         out_btn_row = QHBoxLayout()
         btn_clear = QPushButton("Clear Messages")
         btn_clear.clicked.connect(self.clear_text)
+        self.btn_freeze = QPushButton("Freeze Spectrogram")
+        self.btn_freeze.setCheckable(True)
+        self.btn_freeze.toggled.connect(self.on_freeze_toggle)
         self.chk_projector = QCheckBox("Projector Font")
         self.chk_projector.toggled.connect(self.on_projector_toggle)
         out_btn_row.addWidget(btn_clear)
-        out_btn_row.addWidget(self.chk_projector)
+        out_btn_row.addWidget(self.btn_freeze)
         left_layout.addLayout(out_btn_row)
+        left_layout.addWidget(self.chk_projector)
 
         # DSP Sliders
         self.group_sliders = QGroupBox(f"DSP Settings ({self.engine.sr} Hz)")
@@ -655,6 +664,7 @@ class AcousticSpectrometerApp(QMainWindow):
         return sl
 
     def populate_microphones(self):
+        prev_device = self.combo_mic.currentData() if self.combo_mic.count() > 0 else None
         self.combo_mic.blockSignals(True)
         self.combo_mic.clear()
         self.combo_mic.addItem("System Default Microphone", userData=None)
@@ -667,7 +677,21 @@ class AcousticSpectrometerApp(QMainWindow):
                     self.combo_mic.addItem(f"[{idx}] {name} ({sr_hint} Hz)", userData=idx)
         except Exception as exc:
             self.mic_error_msg = f"Audio device query failed: {exc}"
+
+        # Restore previously selected device if still available
+        if prev_device is not None:
+            for i in range(self.combo_mic.count()):
+                if self.combo_mic.itemData(i) == prev_device:
+                    self.combo_mic.setCurrentIndex(i)
+                    break
         self.combo_mic.blockSignals(False)
+
+    def _drain_audio_queue(self):
+        while not self.q_in.empty():
+            try:
+                self.q_in.get_nowait()
+            except queue.Empty:
+                break
 
     def start_audio_stream(self, device_idx):
         if self.stream is not None:
@@ -678,7 +702,9 @@ class AcousticSpectrometerApp(QMainWindow):
                 pass
             self.stream = None
 
+        self._drain_audio_queue()
         self.mic_error_msg = ""
+        prev_sr = self.engine.sr
         candidate_rates = [44100]
         try:
             dev_info = sd.query_devices(device_idx, "input")
@@ -691,23 +717,27 @@ class AcousticSpectrometerApp(QMainWindow):
         last_err = None
         for sr in candidate_rates:
             try:
-                if sr != self.engine.sr:
-                    self.engine.set_sample_rate(sr)
-                    self._update_slider_bounds_for_sr()
-                self.stream = sd.InputStream(
+                stream = sd.InputStream(
                     device=device_idx,
-                    samplerate=self.engine.sr,
+                    samplerate=sr,
                     channels=1,
                     blocksize=self.engine.hop,
                     callback=self.audio_callback,
                 )
-                self.stream.start()
+                if sr != self.engine.sr:
+                    self.engine.set_sample_rate(sr)
+                    self._update_slider_bounds_for_sr()
+                stream.start()
+                self.stream = stream
                 self.group_sliders.setTitle(f"DSP Settings ({self.engine.sr} Hz)")
                 self.refresh_display()
                 return
             except Exception as exc:
                 last_err = exc
 
+        if self.engine.sr != prev_sr:
+            self.engine.set_sample_rate(prev_sr)
+            self._update_slider_bounds_for_sr()
         self.mic_error_msg = f"Could not open microphone: {last_err}"
         self.refresh_display()
 
@@ -721,7 +751,14 @@ class AcousticSpectrometerApp(QMainWindow):
 
     def audio_callback(self, indata, frames, time_info, status):
         block = indata[:, 0].copy() if indata.ndim > 1 else indata.copy()
-        self.q_in.put(block)
+        try:
+            self.q_in.put_nowait(block)
+        except queue.Full:
+            try:
+                self.q_in.get_nowait()
+                self.q_in.put_nowait(block)
+            except queue.Empty:
+                pass
 
     def update_mod_controls_for_profile(self):
         prof = self.engine.get_active_profile()
@@ -895,6 +932,11 @@ class AcousticSpectrometerApp(QMainWindow):
         self.txt_output.setFont(QFont("Monospace", size, QFont.Weight.Bold))
         self.refresh_display()
 
+    def on_freeze_toggle(self, checked: bool):
+        self.spectro_frozen = checked
+        self.btn_freeze.setText("Resume Spectrogram" if checked else "Freeze Spectrogram")
+        self.btn_freeze.setStyleSheet("background: #d9534f; color: white;" if checked else "")
+
     def clear_text(self):
         self.engine.clear_all_messages()
         self.refresh_display()
@@ -920,7 +962,7 @@ class AcousticSpectrometerApp(QMainWindow):
         if ui_dirty:
             self.refresh_display()
 
-        if blocks_processed > 0:
+        if blocks_processed > 0 and not self.spectro_frozen:
             f_idx = int(np.abs(self.engine.freqs_all - self.engine.current_fmax).argmin())
             f_idx = max(1, f_idx)
             display_data = self.engine.spec_data[:, :f_idx]

@@ -160,6 +160,48 @@ class TestSyncAndFrontend(unittest.TestCase):
         )
         self.assertEqual(node_check.returncode, 0, msg=f"JS syntax error:\n{node_check.stderr}")
 
+    def test_ifft_photo_to_sound_roundtrip(self):
+        """Extracts radix2FFT & synthesizeMatrixToFloat32 from index.html, synthesizes a
+        horizontal bar at 3900 Hz in Node, and verifies the resulting audio spectrum peaks at 3900 Hz."""
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        m_fft = re.search(r"(function radix2FFT\(.*?\n        \})", html, re.DOTALL)
+        m_syn = re.search(r"(function synthesizeMatrixToFloat32\(.*?\n        \})", html, re.DOTALL)
+        self.assertIsNotNone(m_fft, "radix2FFT not found in index.html")
+        self.assertIsNotNone(m_syn, "synthesizeMatrixToFloat32 not found in index.html")
+
+        harness = (
+            m_fft.group(1)
+            + "\n"
+            + m_syn.group(1)
+            + """
+const w = 64, h = 64;
+const mat = new Float32Array(w * h);
+// Bright horizontal bar at exact vertical midpoint (y = 32 -> ~3900 Hz for 300..7500 Hz)
+for (let x = 0; x < w; x++) {
+    mat[31 * w + x] = 1.0;
+    mat[32 * w + x] = 1.0;
+}
+const samples = synthesizeMatrixToFloat32(mat, w, h, {
+    sr: 22050, durationSec: 1.5, nfft: 1024, fMin: 300.0, fMax: 7500.0
+});
+process.stdout.write(Buffer.from(samples.buffer));
+"""
+        )
+        proc = subprocess.run(["node", "-e", harness], capture_output=True)
+        self.assertEqual(proc.returncode, 0, msg=proc.stderr.decode("utf-8", errors="ignore"))
+
+        audio = np.frombuffer(proc.stdout, dtype=np.float32)
+        self.assertGreater(len(audio), 20000)
+        self.assertFalse(np.any(np.isnan(audio)))
+        self.assertGreater(float(np.max(np.abs(audio))), 0.5)
+
+        # Analyze steady middle segment with RFFT
+        mid = audio[8000:24384]
+        spec = np.abs(np.fft.rfft(mid * np.hanning(len(mid))))
+        freqs = np.fft.rfftfreq(len(mid), 1.0 / 22050.0)
+        peak_freq = float(freqs[int(np.argmax(spec))])
+        self.assertAlmostEqual(peak_freq, 3900.0, delta=120.0)
+
 
 class TestDSPLoopback(unittest.TestCase):
     def setUp(self):
@@ -225,6 +267,18 @@ class TestDSPLoopback(unittest.TestCase):
         eng = self._configure_engine("canary", "4fsk")
         hp, lp = eng.clamp_filters(6000, 4000)
         self.assertLessEqual(hp, lp - 200.0)
+
+    def test_visualizer_mode_preserves_raw_spectrum(self):
+        """Visualizer mode should not erode subtle tones with aggressive spectral subtraction."""
+        eng = self._configure_engine("canary", "4fsk")
+        eng.rx_enabled = False
+        eng.hp_fc, eng.lp_fc = 10.0, 10000.0
+        eng.update_filters()
+        t = np.arange(eng.hop * 10, dtype=np.float32) / eng.sr
+        tone = 0.2 * np.sin(2.0 * np.pi * 4000.0 * t).astype(np.float32)
+        run_engine_on_signal(eng, tone)
+        idx_4k = int(np.abs(eng.freqs_all - 4000.0).argmin())
+        self.assertGreater(float(eng.spec_data[-1, idx_4k]), 0.0)
 
 
 if __name__ == "__main__":
