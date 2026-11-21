@@ -1,33 +1,230 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Bird Language Acoustic Converter</title>
+    <meta charset="UTF-8">
+    <title>Acoustic Spectrometer &amp; Bird-Language Lab</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { background: #121212; color: #cccccc; font-family: monospace; text-align: center; padding: 20px; }
-        .lang-container { max-width: 500px; margin: 0 auto 10px auto; display: flex; justify-content: flex-end; }
-        .lang-switch { display: flex; border: 1px solid #333; border-radius: 4px; overflow: hidden; background: #1a1a1a; }
-        .lang-btn { background: none; border: none; color: #666; padding: 6px 12px; cursor: pointer; font-family: monospace; font-weight: bold; transition: all 0.2s; }
+        * { box-sizing: border-box; }
+        body {
+            background: #121212;
+            color: #cccccc;
+            font-family: monospace;
+            text-align: center;
+            padding: 16px;
+            margin: 0;
+        }
+        .top-bar {
+            max-width: 520px;
+            margin: 0 auto 10px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .profile-badge {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #1a2a2c;
+            color: #00e5ff;
+            border: 1px solid #00adb5;
+            letter-spacing: 0.5px;
+        }
+        .profile-badge.classic {
+            background: #2b2214;
+            color: #ffb74d;
+            border-color: #ff9800;
+        }
+        .lang-switch {
+            display: flex;
+            border: 1px solid #333;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #1a1a1a;
+        }
+        .lang-btn {
+            background: none;
+            border: none;
+            color: #777;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+            width: auto;
+            margin: 0;
+            transition: all 0.2s;
+        }
         .lang-btn.active { background: #00adb5; color: #fff; }
-        .section { background: #1a1a1a; border: 1px solid #333; padding: 20px; border-radius: 8px; max-width: 500px; margin: 20px auto; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        input[type="text"], select { font-size: 16px; padding: 10px; width: 85%; text-align: center; background: #222; color: #fff; border: 1px solid #00adb5; border-radius: 4px; font-family: monospace; }
-        select { width: 90%; margin-bottom: 10px; cursor: pointer; }
-        input[type="file"] { margin: 15px 0; color: #ccc; }
-        button { font-size: 16px; padding: 12px 24px; margin-top: 15px; background: #00adb5; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s; font-family: monospace; }
+        h2 { margin: 8px auto 16px auto; max-width: 520px; color: #eee; }
+        .section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 18px;
+            border-radius: 8px;
+            max-width: 520px;
+            margin: 16px auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.35);
+        }
+        .section-title {
+            margin: 0 0 12px 0;
+            font-size: 15px;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+        input[type="text"], select {
+            font-size: 16px;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+            background: #222;
+            color: #fff;
+            border: 1px solid #00adb5;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        select { margin-bottom: 10px; cursor: pointer; }
+        input[type="file"] { margin: 12px 0; color: #ccc; max-width: 100%; }
+        button {
+            font-size: 15px;
+            padding: 12px 20px;
+            margin-top: 12px;
+            background: #00adb5;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: background 0.2s;
+            font-family: monospace;
+        }
         button:active { background: #007a80; }
         button:disabled { background: #555; cursor: not-allowed; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 15px auto; }
-        .key { background: #222; border: 1px solid #444; padding: 10px 4px; font-size: 14px; color: #00adb5; cursor: pointer; font-weight: bold; border-radius: 4px; user-select: none; transition: all 0.15s; }
-        .key:active { background: #00adb5; color: #fff; }
+        button.btn-stop { background: #d9534f; }
+        button.btn-stop:active { background: #b52b27; }
+        button.btn-secondary { background: #3a3a3a; }
+        button.btn-secondary:active { background: #2a2a2a; }
+
+        .preset-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin: 10px 0 4px 0;
+        }
+        .preset-chip {
+            width: auto;
+            margin: 0;
+            padding: 5px 10px;
+            font-size: 12px;
+            background: #252525;
+            color: #00e5ff;
+            border: 1px solid #3a5a5d;
+            border-radius: 999px;
+        }
+        .preset-chip:hover { background: #1f3436; }
+
+        .hint-text {
+            font-size: 11px;
+            color: #ffb74d;
+            min-height: 14px;
+            margin-top: 6px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 12px auto;
+        }
+        .key {
+            background: #222;
+            border: 1px solid #444;
+            padding: 10px 4px;
+            font-size: 14px;
+            color: #00adb5;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+            user-select: none;
+            transition: all 0.15s;
+        }
+        .key:active, .key.playing { background: #00adb5; color: #fff; border-color: #00e5ff; }
         .key.inactive { opacity: 0.25; pointer-events: none; border-style: dashed; }
         .key span { display: block; font-size: 10px; color: #888; margin-top: 3px; }
-        #statusMessage { margin-top: 15px; color: #00adb5; font-weight: bold; height: 20px; }
-        audio { width: 100%; margin-top: 15px; outline: none; }
+        .key.playing span { color: #e0f7fa; }
 
-        .radio-group { background: #222; padding: 12px 15px; border-radius: 4px; text-align: left; margin: 12px 0; border: 1px solid #444; }
-        .radio-group label { display: block; margin-bottom: 8px; cursor: pointer; font-size: 14px; }
+        .radio-group {
+            background: #222;
+            padding: 12px 14px;
+            border-radius: 4px;
+            text-align: left;
+            margin: 10px 0;
+            border: 1px solid #444;
+        }
+        .radio-group label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
         .radio-group label:last-child { margin-bottom: 0; }
-        .radio-group input[type="radio"] { margin-right: 10px; accent-color: #00adb5; }
+        .radio-group label.disabled-opt { opacity: 0.38; cursor: not-allowed; }
+        .radio-group input[type="radio"] { margin-right: 8px; accent-color: #00adb5; }
+
+        .tx-progress-wrap {
+            display: none;
+            margin-top: 10px;
+            text-align: left;
+        }
+        .tx-progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: #262626;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        .tx-progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #00adb5;
+            transition: width 0.08s linear;
+        }
+        .tx-progress-label {
+            font-size: 12px;
+            color: #00e5ff;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        #statusMessage {
+            margin-top: 12px;
+            color: #00adb5;
+            font-weight: bold;
+            min-height: 20px;
+            font-size: 13px;
+        }
+        audio { width: 100%; margin-top: 12px; outline: none; }
+
+        .spectro-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .spectro-controls label {
+            font-size: 12px;
+            color: #aaa;
+            white-space: nowrap;
+        }
+        .spectro-controls select {
+            margin: 0;
+            padding: 6px;
+            font-size: 13px;
+        }
 
         /* Fullscreen styles for the spectrometer wrapper */
         #spectroWrapper:fullscreen { height: 100vh !important; border: none; border-radius: 0; max-width: 100%; margin: 0; }
@@ -35,64 +232,84 @@
     </style>
 </head>
 <body>
-    <!-- LANGUAGE SWITCHER -->
-    <div class="lang-container">
+    <!-- TOP BAR: PROFILE BADGE & LANGUAGE SWITCHER -->
+    <div class="top-bar">
+        <div id="activeBadge" class="profile-badge">CANARY · 4-FSK</div>
         <div class="lang-switch">
             <button onclick="setLanguage('en')" id="lang-en" class="lang-btn active">EN</button>
             <button onclick="setLanguage('ro')" id="lang-ro" class="lang-btn">RO</button>
         </div>
     </div>
 
-    <h2 data-translate="titleMain">Bird Language Sound Converter</h2>
+    <h2 data-translate="titleMain">Acoustic Spectrometer &amp; Bird-Language Lab</h2>
 
     <!-- TEXT TO HEX CONVERTER -->
     <div class="section">
-        <p data-translate="titleConverter">Text to Bird-Code (Hex) Converter</p>
+        <p class="section-title" data-translate="titleConverter">Text to Hex Converter</p>
         <input type="text" id="plainTextInput" placeholder="Enter normal text here (e.g. Hello)" data-placeholder="inputPlaceholder">
+        <div class="preset-row">
+            <button class="preset-chip" onclick="applyPreset('HI')">HI</button>
+            <button class="preset-chip" onclick="applyPreset('SALUT')">SALUT</button>
+            <button class="preset-chip" onclick="applyPreset('SOS')">SOS</button>
+            <button class="preset-chip" onclick="applyPreset('HELLO')">HELLO</button>
+        </div>
         <button onclick="convertToHex()" data-translate="btnConvert">CONVERT TO HEX</button>
+        <div id="normHint" class="hint-text"></div>
     </div>
 
-    <!-- BIRD TRANSMITTER -->
+    <!-- UNIFIED CLASSIC & BIRD TRANSMITTER -->
     <div class="section">
-        <p data-translate="titleSpecies">Select Bird Species & Mode</p>
-        <select id="speciesSelect" onchange="updateSpeciesUI()">
-            <option value="blackbird">Eurasian Blackbird (1.8 - 3.3 kHz)</option>
-            <option value="canary" selected>Canary (3.0 - 4.95 kHz)</option>
-            <option value="greattit">Great Tit (3.9 - 6.15 kHz)</option>
-            <option value="goldcrest">Goldcrest (5.2 - 7.9 kHz)</option>
+        <p class="section-title" data-translate="titleProfile">Select Mode &amp; Acoustic Profile</p>
+        <select id="profileSelect" onchange="updateProfileUI()">
+            <optgroup id="optGroupClassic" label="Classic Digital Mode">
+                <option value="classic">Classic Robot (2.4 &amp; 3.0 kHz Square)</option>
+            </optgroup>
+            <optgroup id="optGroupBird" label="Bird Language Mode">
+                <option value="blackbird">Eurasian Blackbird (1.8 - 3.3 kHz)</option>
+                <option value="canary" selected>Canary (3.0 - 4.95 kHz)</option>
+                <option value="greattit">Great Tit (3.9 - 6.15 kHz)</option>
+                <option value="goldcrest">Goldcrest (5.2 - 7.9 kHz)</option>
+            </optgroup>
         </select>
 
         <div class="radio-group">
-            <label>
-                <input type="radio" name="modMode" value="16fsk" onchange="updateSpeciesUI()">
-                <span data-translate="modMode16">16-FSK Quiet Room (16 Notes - Ultra Fast & Melodic)</span>
+            <label id="lblMod16">
+                <input type="radio" name="modMode" value="16fsk" onchange="updateProfileUI()">
+                <span data-translate="modMode16">16-FSK Quiet Room (16 Notes - Ultra Fast &amp; Melodic)</span>
             </label>
-            <label>
-                <input type="radio" name="modMode" value="4fsk" checked onchange="updateSpeciesUI()">
+            <label id="lblMod4">
+                <input type="radio" name="modMode" value="4fsk" checked onchange="updateProfileUI()">
                 <span data-translate="modMode4">4-FSK Bird Song (4 Notes - Balanced)</span>
             </label>
-            <label>
-                <input type="radio" name="modMode" value="2fsk" onchange="updateSpeciesUI()">
-                <span data-translate="modMode2">2-FSK Fallback (2 Notes - Noise Resistant)</span>
+            <label id="lblMod2">
+                <input type="radio" name="modMode" value="2fsk" onchange="updateProfileUI()">
+                <span data-translate="modMode2">2-FSK Noise-Safe (2 Notes - Classroom Resistant)</span>
             </label>
         </div>
 
-        <p data-translate="titleTransmitter">Hex Code to Sing</p>
+        <p style="margin: 12px 0 6px 0; font-size: 14px;" data-translate="titleTransmitter">Hex Code to Transmit</p>
         <input type="text" id="hexInput" placeholder="4849" data-placeholder="hexPlaceholder" value="4849">
-        <button onclick="transmitInput()" data-translate="btnTransmit">SING MESSAGE</button>
+        <button id="btnTransmit" onclick="handleTransmitClick()" data-translate="btnTransmit">TRANSMIT / SING MESSAGE</button>
 
-        <p style="margin-top: 15px; margin-bottom: 5px; font-size: 13px; color: #999;" data-translate="padLabel">Tap to test individual bird notes:</p>
+        <div id="txProgressWrap" class="tx-progress-wrap">
+            <div class="tx-progress-bar-bg">
+                <div id="txProgressFill" class="tx-progress-bar-fill"></div>
+            </div>
+            <div id="txProgressLabel" class="tx-progress-label"></div>
+        </div>
+
+        <p style="margin-top: 14px; margin-bottom: 4px; font-size: 12px; color: #999;" data-translate="padLabel">Tap to test individual notes:</p>
         <div class="grid" id="noteGrid"></div>
-        <p id="notesLabel" style="font-size: 12px; color: #777;"></p>
+        <p id="notesLabel" style="font-size: 12px; color: #777; margin-bottom: 0;"></p>
 
         <!-- SIGNAL OSCILLOSCOPE -->
-        <p style="margin-top: 15px; font-size: 14px;" data-translate="titleOscilloscope">Signal Oscilloscope</p>
+        <p style="margin-top: 14px; margin-bottom: 6px; font-size: 13px;" data-translate="titleOscilloscope">Signal Oscilloscope</p>
         <canvas id="oscCanvas" width="500" height="100" style="width:100%; height:100px; background:#000; border: 1px solid #333; border-radius: 4px; display: block; margin: 0 auto;"></canvas>
     </div>
 
     <!-- IMAGE TO SPECTROGRAM -->
     <div class="section">
-        <p data-translate="titleUpload">Upload Image for Spectrogram Audio</p>
+        <p class="section-title" data-translate="titleUpload">Upload Image for Spectrogram Audio</p>
 
         <div class="radio-group">
             <label>
@@ -105,146 +322,311 @@
             </label>
         </div>
 
-        <input type="file" id="imageInput" accept="image/png, image/jpeg">
-        <button id="uploadBtn" onclick="uploadImage()" data-translate="btnUpload">TRANSMIT IMAGE</button>
+        <input type="file" id="imageInput" accept="image/png, image/jpeg, image/webp">
+        <button id="uploadBtn" onclick="uploadImage()" data-translate="btnUpload">GENERATE SPECTROGRAM AUDIO</button>
         <div id="statusMessage"></div>
         <audio id="audioPlayer" controls style="display: none;"></audio>
     </div>
 
-    <!-- LIVE SPECTROMETER -->
+    <!-- LIVE MOBILE SPECTROMETER -->
     <div class="section">
-        <p data-translate="titleSpectrometer">Live Mobile Spectrometer</p>
+        <p class="section-title" data-translate="titleSpectrometer">Live Mobile Spectrometer</p>
 
-        <div id="spectroWrapper" style="position: relative; width: 100%; height: 200px; background: #000; border: 1px solid #333; border-radius: 4px; overflow: hidden; margin: 0 auto;">
-            <canvas id="spectroCanvas" width="300" height="128" style="width: 100%; height: 100%; display: block;"></canvas>
-            <div id="freqScale" style="position: absolute; right: 0; top: 0; bottom: 0; width: 45px; background: rgba(0,0,0,0.7); color: #00adb5; font-size: 10px; font-weight: bold; display: none; flex-direction: column; justify-content: space-between; padding: 5px; text-align: right; pointer-events: none; border-left: 1px solid #333;"></div>
+        <div class="spectro-controls">
+            <label for="spectroRangeSelect" data-translate="lblSpectroRange">Frequency Range:</label>
+            <select id="spectroRangeSelect" onchange="onSpectroRangeChange()">
+                <option value="8000" selected>0 - 8 kHz (Images &amp; Classic)</option>
+                <option value="10000">0 - 10 kHz (All Birds)</option>
+                <option value="0">Full (0 - Nyquist)</option>
+            </select>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <div id="spectroWrapper" style="position: relative; width: 100%; height: 210px; background: #000; border: 1px solid #333; border-radius: 4px; overflow: hidden; margin: 0 auto;">
+            <canvas id="spectroCanvas" width="300" height="160" style="width: 100%; height: 100%; display: block;"></canvas>
+            <div id="freqScale" style="position: absolute; right: 0; top: 0; bottom: 0; width: 48px; background: rgba(0,0,0,0.72); color: #00adb5; font-size: 10px; font-weight: bold; display: none; flex-direction: column; justify-content: space-between; padding: 5px; text-align: right; pointer-events: none; border-left: 1px solid #333;"></div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 12px;">
             <button id="btnSpectro" onclick="toggleSpectrometer()" data-translate="btnStartSpectro" style="margin-top: 0;">START</button>
-            <button onclick="toggleFullscreen()" data-translate="btnFullscreen" style="margin-top: 0; width: 40%; background: #444;">FULLSCREEN</button>
+            <button onclick="toggleFullscreen()" data-translate="btnFullscreen" class="btn-secondary" style="margin-top: 0; width: 42%;">FULLSCREEN</button>
         </div>
     </div>
 
     <script>
-        let currentLang = "en";
-
-        // --- SHARED BIRD SPECIES PROFILES (Must match ui.py) ---
-        const SPECIES_PROFILES = {
-            blackbird: {
-                nameEn: "Eurasian Blackbird (1.8 - 3.3 kHz)",
-                nameRo: "Mierlă (1.8 - 3.3 kHz)",
-                freqs4: [1800, 2300, 2800, 3300],
-                syncFreq: 1500,       // Safely below f0 (1800Hz) and above HP (1200Hz)
-                toneDur: 0.22,
-                gapDur: 0.10,
-                charGap: 0.38,
-                gap16: 0.16,
-                scoopDur: 0.035,
-                scoopRatio: 0.86,     // Warm upward flute whistle
-                vibratoRate: 14,
-                vibratoDepth: 18,
-                harmonicGain: 0.12
+        // === BEGIN_PROFILES_JSON ===
+        const SHARED_CONFIG = {
+          "version": 1,
+          "renderUrl": "https://audio-spectrometer.onrender.com/",
+          "profiles": {
+            "classic": {
+              "category": "classic",
+              "labelEn": "Classic Robot (2.4 & 3.0 kHz Square)",
+              "labelRo": "Robot Clasic (2.4 & 3.0 kHz Pătrat)",
+              "labelPy": "Classic Robot / Clasic (2.4 & 3.0 kHz Square)",
+              "supportedModes": [
+                "2fsk"
+              ],
+              "defaultMode": "2fsk",
+              "waveform": "square",
+              "freqs4": [
+                2400,
+                2600,
+                2800,
+                3000
+              ],
+              "syncFreq": 2700,
+              "guardOffset": 300,
+              "toneDur": 0.2,
+              "gapDur": 0.1,
+              "charGap": 0.6,
+              "gap16": 0.16,
+              "scoopDur": 0.0,
+              "scoopRatio": 1.0,
+              "vibratoRate": 0,
+              "vibratoDepth": 0,
+              "harmonicGain": 0.0,
+              "rx": {
+                "hp": 2000,
+                "lp": 3500,
+                "fmax": 4000,
+                "gate": 12
+              }
             },
-            canary: {
-                nameEn: "Canary (3.0 - 4.95 kHz)",
-                nameRo: "Canar (3.0 - 4.95 kHz)",
-                freqs4: [3000, 3650, 4300, 4950],
-                syncFreq: 2600,       // Safely below f0 (3000Hz) and above HP (2200Hz)
-                toneDur: 0.18,
-                gapDur: 0.08,
-                charGap: 0.35,
-                gap16: 0.16,
-                scoopDur: 0.025,
-                scoopRatio: 0.90,     // Bright chirp attack
-                vibratoRate: 32,
-                vibratoDepth: 30,     // Signature canary trill
-                harmonicGain: 0.06
+            "blackbird": {
+              "category": "bird",
+              "labelEn": "Eurasian Blackbird (1.8 - 3.3 kHz)",
+              "labelRo": "Mierlă (1.8 - 3.3 kHz)",
+              "labelPy": "Eurasian Blackbird / Mierlă (1.8 - 3.3 kHz)",
+              "supportedModes": [
+                "16fsk",
+                "4fsk",
+                "2fsk"
+              ],
+              "defaultMode": "4fsk",
+              "waveform": "bird",
+              "freqs4": [
+                1800,
+                2300,
+                2800,
+                3300
+              ],
+              "syncFreq": 1500,
+              "guardOffset": 250,
+              "toneDur": 0.22,
+              "gapDur": 0.1,
+              "charGap": 0.38,
+              "gap16": 0.16,
+              "scoopDur": 0.035,
+              "scoopRatio": 0.86,
+              "vibratoRate": 14,
+              "vibratoDepth": 18,
+              "harmonicGain": 0.12,
+              "rx": {
+                "hp": 1200,
+                "lp": 4000,
+                "fmax": 4800,
+                "gate": 12
+              }
             },
-            greattit: {
-                nameEn: "Great Tit (3.9 - 6.15 kHz)",
-                nameRo: "Pițigoi Mare (3.9 - 6.15 kHz)",
-                freqs4: [3900, 4650, 5400, 6150],
-                syncFreq: 3450,       // Safely below f0 (3900Hz) and above HP (3000Hz)
-                toneDur: 0.16,
-                gapDur: 0.09,
-                charGap: 0.35,
-                gap16: 0.16,
-                scoopDur: 0.020,
-                scoopRatio: 1.07,     // Snappy downward staccato attack
-                vibratoRate: 0,
-                vibratoDepth: 0,
-                harmonicGain: 0.04
+            "canary": {
+              "category": "bird",
+              "labelEn": "Canary (3.0 - 4.95 kHz)",
+              "labelRo": "Canar (3.0 - 4.95 kHz)",
+              "labelPy": "Canary / Canar (3.0 - 4.95 kHz)",
+              "supportedModes": [
+                "16fsk",
+                "4fsk",
+                "2fsk"
+              ],
+              "defaultMode": "4fsk",
+              "waveform": "bird",
+              "freqs4": [
+                3000,
+                3650,
+                4300,
+                4950
+              ],
+              "syncFreq": 2600,
+              "guardOffset": 325,
+              "toneDur": 0.18,
+              "gapDur": 0.08,
+              "charGap": 0.35,
+              "gap16": 0.16,
+              "scoopDur": 0.025,
+              "scoopRatio": 0.9,
+              "vibratoRate": 32,
+              "vibratoDepth": 30,
+              "harmonicGain": 0.06,
+              "rx": {
+                "hp": 2200,
+                "lp": 5800,
+                "fmax": 6800,
+                "gate": 12
+              }
             },
-            goldcrest: {
-                nameEn: "Goldcrest (5.2 - 7.9 kHz)",
-                nameRo: "Aușel (5.2 - 7.9 kHz)",
-                freqs4: [5200, 6100, 7000, 7900],
-                syncFreq: 4700,       // Safely below f0 (5200Hz) and above HP (4200Hz)
-                toneDur: 0.16,
-                gapDur: 0.08,
-                charGap: 0.34,
-                gap16: 0.16,
-                scoopDur: 0.020,
-                scoopRatio: 0.93,     // Delicate high tweet
-                vibratoRate: 24,
-                vibratoDepth: 25,
-                harmonicGain: 0.0
+            "greattit": {
+              "category": "bird",
+              "labelEn": "Great Tit (3.9 - 6.15 kHz)",
+              "labelRo": "Pițigoi Mare (3.9 - 6.15 kHz)",
+              "labelPy": "Great Tit / Pițigoi Mare (3.9 - 6.15 kHz)",
+              "supportedModes": [
+                "16fsk",
+                "4fsk",
+                "2fsk"
+              ],
+              "defaultMode": "4fsk",
+              "waveform": "bird",
+              "freqs4": [
+                3900,
+                4650,
+                5400,
+                6150
+              ],
+              "syncFreq": 3450,
+              "guardOffset": 375,
+              "toneDur": 0.16,
+              "gapDur": 0.09,
+              "charGap": 0.35,
+              "gap16": 0.16,
+              "scoopDur": 0.02,
+              "scoopRatio": 1.07,
+              "vibratoRate": 0,
+              "vibratoDepth": 0,
+              "harmonicGain": 0.04,
+              "rx": {
+                "hp": 3000,
+                "lp": 7200,
+                "fmax": 8200,
+                "gate": 12
+              }
+            },
+            "goldcrest": {
+              "category": "bird",
+              "labelEn": "Goldcrest (5.2 - 7.9 kHz)",
+              "labelRo": "Aușel (5.2 - 7.9 kHz)",
+              "labelPy": "Goldcrest / Aușel (5.2 - 7.9 kHz)",
+              "supportedModes": [
+                "16fsk",
+                "4fsk",
+                "2fsk"
+              ],
+              "defaultMode": "4fsk",
+              "waveform": "bird",
+              "freqs4": [
+                5200,
+                6100,
+                7000,
+                7900
+              ],
+              "syncFreq": 4700,
+              "guardOffset": 450,
+              "toneDur": 0.16,
+              "gapDur": 0.08,
+              "charGap": 0.34,
+              "gap16": 0.16,
+              "scoopDur": 0.02,
+              "scoopRatio": 0.93,
+              "vibratoRate": 24,
+              "vibratoDepth": 25,
+              "harmonicGain": 0.0,
+              "rx": {
+                "hp": 4200,
+                "lp": 9000,
+                "fmax": 10500,
+                "gate": 12
+              }
             }
+          },
+          "visualizerDefaults": {
+            "hp": 10,
+            "lp": 10000,
+            "fmax": 10000,
+            "gate": 15
+          }
         };
+        // === END_PROFILES_JSON ===
+
+        const PROFILES = SHARED_CONFIG.profiles;
+        let currentLang = "en";
 
         const translations = {
             en: {
-                titleMain: "Bird Language Sound Converter",
-                titleConverter: "Text to Bird-Code (Hex) Converter",
+                pageTitle: "Acoustic Spectrometer & Bird-Language Lab",
+                titleMain: "Acoustic Spectrometer & Bird-Language Lab",
+                titleConverter: "Text to Hex Converter",
                 inputPlaceholder: "Enter normal text here (e.g. Hello)",
                 btnConvert: "CONVERT TO HEX",
-                titleSpecies: "Select Bird Species & Mode",
+                titleProfile: "Select Mode & Acoustic Profile",
+                groupClassic: "Classic Digital Mode",
+                groupBird: "Bird Language Mode",
                 modMode16: "16-FSK Quiet Room (16 Notes - Ultra Fast & Melodic)",
                 modMode4: "4-FSK Bird Song (4 Notes - Balanced)",
-                modMode2: "2-FSK Fallback (2 Notes - Noise Resistant)",
-                titleTransmitter: "Hex Code to Sing",
-                hexPlaceholder: "Try typing 4849",
-                btnTransmit: "SING MESSAGE",
-                padLabel: "Tap to test individual bird notes:",
+                modMode2: "2-FSK Noise-Safe (2 Notes - Classroom Resistant)",
+                titleTransmitter: "Hex Code to Transmit",
+                hexPlaceholder: "Try typing 4849 (HI)",
+                btnTransmit: "TRANSMIT / SING MESSAGE",
+                btnStopTx: "STOP TRANSMISSION",
+                padLabel: "Tap to test individual notes:",
                 titleOscilloscope: "Signal Oscilloscope",
                 titleUpload: "Upload Image for Spectrogram Audio",
                 txModePhone: "Phone to Phone Mode (Fast)",
                 txModePC: "Presentation Mode (High Quality)",
-                btnUpload: "TRANSMIT IMAGE",
+                btnUpload: "GENERATE SPECTROGRAM AUDIO",
                 alertNoFile: "Please select an image first!",
-                statusReady: "Ready!",
-                statusProcessingPhone: "Processing locally... (Fast Mode)",
-                statusProcessingPC: "Processing locally... (High Quality Mode - May take a moment)",
+                alertBadFile: "Could not load that image file. Please try a PNG or JPG.",
+                alertEmptyHex: "Enter text or valid Hex digits (0-9, A-F) first!",
+                statusReady: "Ready! Press Play below.",
+                statusProcessing: "Processing locally...",
+                normHint: "Romanian diacritics / special characters were converted to ASCII.",
+                txWakeup: "Waking up receiver...",
+                txSending: "Sending",
+                txDone: "Transmission complete!",
                 titleSpectrometer: "Live Mobile Spectrometer",
+                lblSpectroRange: "Frequency Range:",
+                range8k: "0 - 8 kHz (Images & Classic)",
+                range10k: "0 - 10 kHz (All Birds)",
+                rangeFull: "Full (0 - Nyquist)",
                 btnStartSpectro: "START",
                 btnStopSpectro: "STOP",
                 btnFullscreen: "FULLSCREEN",
                 errMic: "Microphone access denied or unavailable."
             },
             ro: {
-                titleMain: "Convertor Limbaj de Păsări",
-                titleConverter: "Convertor Text în Cod Pasăre (Hex)",
+                pageTitle: "Spectrometru Acustic & Limbaj de Păsări",
+                titleMain: "Spectrometru Acustic & Limbaj de Păsări",
+                titleConverter: "Convertor Text în Hex",
                 inputPlaceholder: "Introdu text normal aici (ex. Salut)",
                 btnConvert: "CONVERTEȘTE ÎN HEX",
-                titleSpecies: "Alege Specia de Pasăre și Modul",
+                titleProfile: "Alege Modul și Profilul Acustic",
+                groupClassic: "Mod Digital Clasic",
+                groupBird: "Mod Limbaj de Păsări",
                 modMode16: "16-FSK Cameră Liniștită (16 Note - Ultra Rapid & Melodic)",
-                modMode4: "4-FSK Cântec (4 Note - Echilibrat)",
-                modMode2: "2-FSK Rezervă (2 Note - Rezistent la Zgomot)",
-                titleTransmitter: "Cod Hex de Cântat",
-                hexPlaceholder: "Încearcă să scrii 4849",
-                btnTransmit: "CÂNTĂ MESAJUL",
-                padLabel: "Apasă pentru a testa notele păsării:",
+                modMode4: "4-FSK Cântec de Pasăre (4 Note - Echilibrat)",
+                modMode2: "2-FSK Rezistent la Zgomot (2 Note - Sală de Clasǎ)",
+                titleTransmitter: "Cod Hex de Transmis",
+                hexPlaceholder: "Încearcă 4849 (HI)",
+                btnTransmit: "TRANSMITE / CÂNTĂ MESAJUL",
+                btnStopTx: "OPREȘTE TRANSMISIA",
+                padLabel: "Apasă pentru a testa notele individuale:",
                 titleOscilloscope: "Osciloscop Semnal",
                 titleUpload: "Încarcă Imagine pentru Audio Spectrogramă",
                 txModePhone: "Mod Telefon (Rapid)",
                 txModePC: "Mod Prezentare (Calitate Înaltă)",
-                btnUpload: "TRANSMITE IMAGINE",
+                btnUpload: "GENEREAZĂ AUDIO SPECTROGRAMĂ",
                 alertNoFile: "Vă rugăm să selectați o imagine mai întâi!",
-                statusReady: "Gata!",
-                statusProcessingPhone: "Se procesează local... (Mod Rapid)",
-                statusProcessingPC: "Se procesează local... (Mod Calitate Înaltă - Va dura puțin)",
+                alertBadFile: "Imaginea nu a putut fi încărcată. Încearcă un PNG sau JPG.",
+                alertEmptyHex: "Introdu un text sau cod Hex valid (0-9, A-F) mai întâi!",
+                statusReady: "Gata! Apasă Play mai jos.",
+                statusProcessing: "Se procesează local...",
+                normHint: "Diacriticele românești / caracterele speciale au fost convertite în ASCII.",
+                txWakeup: "Se trezește receptorul...",
+                txSending: "Se transmite",
+                txDone: "Transmisie completă!",
                 titleSpectrometer: "Spectrometru Mobil Live",
+                lblSpectroRange: "Interval Frecvență:",
+                range8k: "0 - 8 kHz (Imagini & Clasic)",
+                range10k: "0 - 10 kHz (Toate Păsările)",
+                rangeFull: "Complet (0 - Nyquist)",
                 btnStartSpectro: "PORNEȘTE",
                 btnStopSpectro: "OPREȘTE",
                 btnFullscreen: "ECRAN COMPLET",
@@ -252,86 +634,123 @@
             }
         };
 
-        function getActiveSpecies() {
-            const key = document.getElementById('speciesSelect').value;
-            return SPECIES_PROFILES[key];
+        // --- PROFILE & MODE HELPERS ---
+
+        function getActiveProfileKey() {
+            return document.getElementById('profileSelect').value;
+        }
+
+        function getActiveProfile() {
+            return PROFILES[getActiveProfileKey()];
         }
 
         function getActiveModMode() {
             return document.querySelector('input[name="modMode"]:checked').value;
         }
 
-        function getActiveFreqs(sp, modMode) {
-            if (modMode === '2fsk') return [sp.freqs4[0], sp.freqs4[3]];
-            if (modMode === '4fsk') return sp.freqs4;
-            const f0 = sp.freqs4[0];
-            const f3 = sp.freqs4[3];
+        function getActiveFreqs(profile, modMode) {
+            if (modMode === '2fsk') return [profile.freqs4[0], profile.freqs4[3]];
+            if (modMode === '4fsk') return profile.freqs4.slice();
+            const f0 = profile.freqs4[0];
+            const f3 = profile.freqs4[3];
             const step = (f3 - f0) / 15;
             return Array.from({ length: 16 }, (_, i) => Math.round(f0 + i * step));
         }
 
-        function updateSpeciesUI() {
-            const sp = getActiveSpecies();
-            const mode = getActiveModMode();
-            const selectEl = document.getElementById('speciesSelect');
-            const grid = document.getElementById('noteGrid');
+        function updateProfileUI() {
+            const key = getActiveProfileKey();
+            const profile = getActiveProfile();
+            const supported = profile.supportedModes || ['2fsk'];
 
-            // Localize dropdown labels
-            for (const opt of selectEl.options) {
-                const profile = SPECIES_PROFILES[opt.value];
-                opt.text = currentLang === 'ro' ? profile.nameRo : profile.nameEn;
+            // Enforce supported modulation modes for the active profile
+            const radios = document.querySelectorAll('input[name="modMode"]');
+            radios.forEach(r => {
+                const isAllowed = supported.includes(r.value);
+                r.disabled = !isAllowed;
+                r.parentElement.classList.toggle('disabled-opt', !isAllowed);
+            });
+
+            if (!supported.includes(getActiveModMode())) {
+                const fallbackRadio = document.querySelector(`input[name="modMode"][value="${profile.defaultMode}"]`);
+                if (fallbackRadio) fallbackRadio.checked = true;
             }
 
-            // Build dynamic Bird Note Test Pads
+            const mode = getActiveModMode();
+            const selectEl = document.getElementById('profileSelect');
+            const grid = document.getElementById('noteGrid');
+
+            // Localize optgroup & option labels
+            document.getElementById('optGroupClassic').label = translations[currentLang].groupClassic;
+            document.getElementById('optGroupBird').label = translations[currentLang].groupBird;
+            for (const opt of selectEl.options) {
+                const p = PROFILES[opt.value];
+                if (p) opt.text = currentLang === 'ro' ? p.labelRo : p.labelEn;
+            }
+
+            // Update top badge
+            const badge = document.getElementById('activeBadge');
+            const shortName = (currentLang === 'ro' ? profile.labelRo : profile.labelEn).split('(')[0].trim().toUpperCase();
+            badge.innerText = `${shortName} · ${mode.toUpperCase()}`;
+            badge.classList.toggle('classic', profile.category === 'classic');
+
+            // Build dynamic Note Test Pads
             grid.innerHTML = '';
             if (mode === '16fsk') {
-                const freqs16 = getActiveFreqs(sp, '16fsk');
+                const freqs16 = getActiveFreqs(profile, '16fsk');
                 freqs16.forEach((freq, i) => {
                     const hexLabel = i.toString(16).toUpperCase();
                     const pad = document.createElement('div');
                     pad.className = 'key';
+                    pad.dataset.freq = freq;
                     pad.innerHTML = `${hexLabel}<span>${freq}Hz</span>`;
-                    pad.onclick = () => playSingleFreq(freq);
+                    pad.onclick = () => playSingleFreq(freq, pad);
                     grid.appendChild(pad);
                 });
             } else {
                 for (let i = 0; i < 4; i++) {
-                    const freq = sp.freqs4[i];
+                    const freq = profile.freqs4[i];
                     const pad = document.createElement('div');
                     pad.className = 'key';
 
                     if (mode === '2fsk') {
                         if (i === 0) {
+                            pad.dataset.freq = freq;
                             pad.innerHTML = `BIT 0<span>${freq}Hz</span>`;
-                            pad.onclick = () => playSingleFreq(freq);
+                            pad.onclick = () => playSingleFreq(freq, pad);
                         } else if (i === 3) {
+                            pad.dataset.freq = freq;
                             pad.innerHTML = `BIT 1<span>${freq}Hz</span>`;
-                            pad.onclick = () => playSingleFreq(freq);
+                            pad.onclick = () => playSingleFreq(freq, pad);
                         } else {
                             pad.classList.add('inactive');
                             pad.innerHTML = `--<span>${freq}Hz</span>`;
                         }
                     } else {
+                        pad.dataset.freq = freq;
                         pad.innerHTML = `${i.toString(2).padStart(2, '0')}<span>${freq}Hz</span>`;
-                        pad.onclick = () => playSingleFreq(freq);
+                        pad.onclick = () => playSingleFreq(freq, pad);
                     }
                     grid.appendChild(pad);
                 }
             }
 
             const notesLabel = document.getElementById('notesLabel');
+            const waveTag = profile.waveform === 'square' ? 'Square' : 'Bird Syrinx';
             if (mode === '16fsk') {
-                const step = Math.round((sp.freqs4[3] - sp.freqs4[0]) / 15);
-                notesLabel.innerText = `16-FSK: ${sp.freqs4[0]}Hz–${sp.freqs4[3]}Hz (${step}Hz step, 1 chirp/hex)`;
+                const step = Math.round((profile.freqs4[3] - profile.freqs4[0]) / 15);
+                notesLabel.innerText = `16-FSK (${waveTag}): ${profile.freqs4[0]}Hz–${profile.freqs4[3]}Hz (${step}Hz step, 1 note/hex)`;
             } else if (mode === '4fsk') {
-                notesLabel.innerText = `4-FSK: ${sp.freqs4.join('Hz / ')}Hz (${Math.round(sp.toneDur * 1000)}ms chirp)`;
+                notesLabel.innerText = `4-FSK (${waveTag}): ${profile.freqs4.join('Hz / ')}Hz (${Math.round(profile.toneDur * 1000)}ms)`;
             } else {
-                notesLabel.innerText = `2-FSK: ${sp.freqs4[0]}Hz (0) & ${sp.freqs4[3]}Hz (1) (${Math.round(sp.toneDur * 1000)}ms chirp)`;
+                notesLabel.innerText = `2-FSK (${waveTag}): ${profile.freqs4[0]}Hz (0) & ${profile.freqs4[3]}Hz (1) (${Math.round(profile.toneDur * 1000)}ms)`;
             }
         }
 
         function setLanguage(lang) {
+            if (!translations[lang]) lang = 'en';
             currentLang = lang;
+            document.documentElement.lang = lang;
+            document.title = translations[lang].pageTitle;
 
             document.getElementById('lang-en').classList.toggle('active', lang === 'en');
             document.getElementById('lang-ro').classList.toggle('active', lang === 'ro');
@@ -350,27 +769,71 @@
                 }
             });
 
+            // Localize spectrometer range options
+            const rangeSel = document.getElementById('spectroRangeSelect');
+            rangeSel.options[0].text = translations[lang].range8k;
+            rangeSel.options[1].text = translations[lang].range10k;
+            rangeSel.options[2].text = translations[lang].rangeFull;
+
+            // Keep dynamic button labels consistent with running state
             if (isSpectroRunning) {
                 document.getElementById('btnSpectro').innerText = translations[lang].btnStopSpectro;
             }
-            updateSpeciesUI();
+            if (isTransmitting) {
+                document.getElementById('btnTransmit').innerText = translations[lang].btnStopTx;
+            }
+
+            updateProfileUI();
+        }
+
+        // --- ROMANIAN DIACRITICS TRANSLITERATION & TEXT-TO-HEX ---
+
+        function normalizeToAscii(input) {
+            const roMap = {
+                'ă': 'a', 'Ă': 'A', 'â': 'a', 'Â': 'A', 'î': 'i', 'Î': 'I',
+                'ș': 's', 'Ș': 'S', 'ş': 's', 'Ş': 'S',
+                'ț': 't', 'Ț': 'T', 'ţ': 't', 'Ţ': 'T'
+            };
+            let mapped = input.replace(/[ăĂâÂîÎșȘşŞțȚţŢ]/g, ch => roMap[ch] || ch);
+            // Strip any remaining combining accents (e.g. é -> e)
+            mapped = mapped.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            // Replace non-printable / non-ASCII chars with '?'
+            let clean = '';
+            for (let i = 0; i < mapped.length; i++) {
+                const code = mapped.charCodeAt(i);
+                clean += (code >= 32 && code <= 126) ? mapped[i] : '?';
+            }
+            return { clean, changed: clean !== input };
         }
 
         function convertToHex() {
-            let text = document.getElementById('plainTextInput').value;
-            text = text.replace(/ /g, '_');
+            const raw = document.getElementById('plainTextInput').value;
+            const { clean, changed } = normalizeToAscii(raw);
+            document.getElementById('normHint').innerText = changed ? translations[currentLang].normHint : '';
+
+            const underscored = clean.replace(/ /g, '_');
             let hexStr = "";
-            for (let i = 0; i < text.length; i++) {
-                let hexChar = text.charCodeAt(i).toString(16).toUpperCase();
-                hexStr += hexChar.length < 2 ? "0" + hexChar : hexChar;
+            for (let i = 0; i < underscored.length; i++) {
+                const hexChar = underscored.charCodeAt(i).toString(16).toUpperCase().padStart(2, '0');
+                hexStr += hexChar;
             }
             document.getElementById('hexInput').value = hexStr;
         }
 
-        // --- BIRD AUDIO SYNTHESIZER & OSCILLOSCOPE ---
+        function applyPreset(word) {
+            document.getElementById('plainTextInput').value = word;
+            convertToHex();
+        }
+
+        // --- UNIFIED AUDIO SYNTHESIZER, TX CONTROLLER & OSCILLOSCOPE ---
+
         let txAudioCtx = null;
         let txAnalyser = null;
         let oscReqId = null;
+
+        let isTransmitting = false;
+        let activeTxNodes = [];
+        let activeTxTimers = [];
 
         function initTxAudio() {
             if (!txAudioCtx) {
@@ -403,12 +866,11 @@
                 ctx.strokeStyle = '#00adb5';
                 ctx.beginPath();
 
-                const sliceWidth = canvas.width * 1.0 / bufferLength;
+                const sliceWidth = canvas.width / bufferLength;
                 let x = 0;
-
                 for (let i = 0; i < bufferLength; i++) {
                     const v = dataArray[i] / 128.0;
-                    const y = v * canvas.height / 2;
+                    const y = (v * canvas.height) / 2;
                     if (i === 0) ctx.moveTo(x, y);
                     else ctx.lineTo(x, y);
                     x += sliceWidth;
@@ -419,41 +881,86 @@
             draw();
         }
 
-        function playBirdSyllable(targetFreq, sp, modMode, audioCtx, startTime) {
-            const dur = sp.toneDur;
+        function registerTxNode(node) {
+            activeTxNodes.push(node);
+        }
+
+        function stopTransmission(resetProgress = true) {
+            activeTxTimers.forEach(id => clearTimeout(id));
+            activeTxTimers = [];
+
+            activeTxNodes.forEach(node => {
+                try { node.stop(); } catch (_) {}
+                try { node.disconnect(); } catch (_) {}
+            });
+            activeTxNodes = [];
+
+            isTransmitting = false;
+            const btn = document.getElementById('btnTransmit');
+            btn.classList.remove('btn-stop');
+            btn.innerText = translations[currentLang].btnTransmit;
+
+            document.querySelectorAll('#noteGrid .key.playing').forEach(el => el.classList.remove('playing'));
+
+            if (resetProgress) {
+                document.getElementById('txProgressWrap').style.display = 'none';
+                document.getElementById('txProgressFill').style.width = '0%';
+                document.getElementById('txProgressLabel').innerText = '';
+            }
+        }
+
+        function playSquareSyllable(targetFreq, profile, audioCtx, startTime) {
+            const dur = profile.toneDur;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(targetFreq, startTime);
+
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+            gainNode.gain.setValueAtTime(0.2, startTime + dur - 0.02);
+            gainNode.gain.linearRampToValueAtTime(0, startTime + dur);
+
+            osc.connect(gainNode);
+            gainNode.connect(txAnalyser);
+            osc.start(startTime);
+            osc.stop(startTime + dur + 0.005);
+            registerTxNode(osc);
+        }
+
+        function playBirdSyllable(targetFreq, profile, modMode, audioCtx, startTime) {
+            const dur = profile.toneDur;
             const is16 = (modMode === '16fsk');
 
-            // In 16-FSK, keep pitch scoop inside 35% of one step & scale vibrato to 35%
-            // so the note stays organic without crossing adjacent FFT channels.
-            const step16 = (sp.freqs4[3] - sp.freqs4[0]) / 15;
-            const scoop = is16 ? 0.015 : sp.scoopDur;
-            const scoopDir = sp.scoopRatio < 1.0 ? -1 : 1;
+            const step16 = (profile.freqs4[3] - profile.freqs4[0]) / 15;
+            const scoop = is16 ? 0.015 : profile.scoopDur;
+            const scoopDir = profile.scoopRatio < 1.0 ? -1 : 1;
             const startFreq = is16
                 ? targetFreq + scoopDir * (step16 * 0.35)
-                : targetFreq * sp.scoopRatio;
-            const vibDepth = is16 ? sp.vibratoDepth * 0.35 : sp.vibratoDepth;
+                : targetFreq * profile.scoopRatio;
+            const vibDepth = is16 ? profile.vibratoDepth * 0.35 : profile.vibratoDepth;
 
-            // Main syrinx oscillator
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             osc.type = 'sine';
 
             osc.frequency.setValueAtTime(startFreq, startTime);
-            osc.frequency.exponentialRampToValueAtTime(targetFreq, startTime + scoop);
+            if (scoop > 0) {
+                osc.frequency.exponentialRampToValueAtTime(targetFreq, startTime + scoop);
+            }
             osc.frequency.setValueAtTime(targetFreq, startTime + dur - 0.015);
 
-            // Amplitude envelope
             gainNode.gain.setValueAtTime(0.0001, startTime);
             gainNode.gain.linearRampToValueAtTime(0.28, startTime + 0.016);
             gainNode.gain.linearRampToValueAtTime(0.22, startTime + dur - 0.022);
             gainNode.gain.linearRampToValueAtTime(0.0001, startTime + dur);
 
-            // Optional FM vibrato / trill
-            if (sp.vibratoRate > 0 && vibDepth > 0) {
+            if (profile.vibratoRate > 0 && vibDepth > 0) {
                 const lfo = audioCtx.createOscillator();
                 const lfoGain = audioCtx.createGain();
                 lfo.type = 'sine';
-                lfo.frequency.setValueAtTime(sp.vibratoRate, startTime);
+                lfo.frequency.setValueAtTime(profile.vibratoRate, startTime);
 
                 lfoGain.gain.setValueAtTime(0, startTime);
                 lfoGain.gain.setValueAtTime(0, startTime + scoop);
@@ -465,111 +972,197 @@
                 lfoGain.connect(osc.frequency);
                 lfo.start(startTime);
                 lfo.stop(startTime + dur + 0.01);
+                registerTxNode(lfo);
             }
 
             osc.connect(gainNode);
             gainNode.connect(txAnalyser);
             osc.start(startTime);
             osc.stop(startTime + dur + 0.01);
+            registerTxNode(osc);
 
-            // Optional subtle 2nd harmonic for woody resonance (never collides; species < 1 octave)
-            if (sp.harmonicGain > 0) {
+            if (profile.harmonicGain > 0) {
                 const harmOsc = audioCtx.createOscillator();
                 const harmGain = audioCtx.createGain();
                 harmOsc.type = 'sine';
 
                 harmOsc.frequency.setValueAtTime(startFreq * 2, startTime);
-                harmOsc.frequency.exponentialRampToValueAtTime(targetFreq * 2, startTime + scoop);
+                if (scoop > 0) {
+                    harmOsc.frequency.exponentialRampToValueAtTime(targetFreq * 2, startTime + scoop);
+                }
 
                 harmGain.gain.setValueAtTime(0.0001, startTime);
-                harmGain.gain.linearRampToValueAtTime(0.28 * sp.harmonicGain, startTime + 0.018);
+                harmGain.gain.linearRampToValueAtTime(0.28 * profile.harmonicGain, startTime + 0.018);
                 harmGain.gain.linearRampToValueAtTime(0.0001, startTime + dur);
 
                 harmOsc.connect(harmGain);
                 harmGain.connect(txAnalyser);
                 harmOsc.start(startTime);
                 harmOsc.stop(startTime + dur + 0.01);
+                registerTxNode(harmOsc);
             }
         }
 
-        function playBirdHexChar(hexChar, sp, modMode, audioCtx, startTime, isEndOfByte) {
+        function playSyllable(targetFreq, profile, modMode, audioCtx, startTime) {
+            if (profile.waveform === 'square') {
+                playSquareSyllable(targetFreq, profile, audioCtx, startTime);
+            } else {
+                playBirdSyllable(targetFreq, profile, modMode, audioCtx, startTime);
+            }
+        }
+
+        function schedulePadFlash(freq, delayMs, durMs) {
+            const t1 = setTimeout(() => {
+                if (!isTransmitting) return;
+                document.querySelectorAll('#noteGrid .key.playing').forEach(el => el.classList.remove('playing'));
+                const pad = document.querySelector(`#noteGrid .key[data-freq="${freq}"]`);
+                if (pad) pad.classList.add('playing');
+            }, Math.max(0, delayMs));
+            const t2 = setTimeout(() => {
+                const pad = document.querySelector(`#noteGrid .key[data-freq="${freq}"]`);
+                if (pad) pad.classList.remove('playing');
+            }, Math.max(0, delayMs + durMs));
+            activeTxTimers.push(t1, t2);
+        }
+
+        function playHexChar(hexChar, profile, modMode, audioCtx, startTime, isEndOfByte, ctxBaseTime) {
             const val = parseInt(hexChar, 16);
-            const symInterval = sp.toneDur + sp.gapDur;
+            const symInterval = profile.toneDur + profile.gapDur;
 
             if (modMode === '16fsk') {
-                // 1 syllable per hex digit (4 bits/chirp)
-                const freqs16 = getActiveFreqs(sp, '16fsk');
-                playBirdSyllable(freqs16[val], sp, modMode, audioCtx, startTime);
-                // Add a gentle natural bird breath after every full ASCII letter (2 hex digits)
+                const freqs16 = getActiveFreqs(profile, '16fsk');
+                const f = freqs16[val];
+                playSyllable(f, profile, modMode, audioCtx, startTime);
+                schedulePadFlash(f, (startTime - ctxBaseTime) * 1000, profile.toneDur * 1000);
                 const extraPhraseBreath = isEndOfByte ? 0.08 : 0.0;
-                return sp.toneDur + sp.gap16 + extraPhraseBreath;
+                return profile.toneDur + profile.gap16 + extraPhraseBreath;
             } else if (modMode === '4fsk') {
-                // 2 syllables per hex digit (2 bits/chirp)
                 const syms = [(val >> 2) & 0x3, val & 0x3];
                 for (let k = 0; k < syms.length; k++) {
-                    playBirdSyllable(sp.freqs4[syms[k]], sp, modMode, audioCtx, startTime + k * symInterval);
+                    const f = profile.freqs4[syms[k]];
+                    const t = startTime + k * symInterval;
+                    playSyllable(f, profile, modMode, audioCtx, t);
+                    schedulePadFlash(f, (t - ctxBaseTime) * 1000, profile.toneDur * 1000);
                 }
-                return symInterval + sp.toneDur + sp.charGap;
+                return symInterval + profile.toneDur + profile.charGap;
             } else {
-                // 2-FSK fallback: 4 syllables per hex digit using widest pair [f0, f3]
-                const freqs2 = [sp.freqs4[0], sp.freqs4[3]];
+                const freqs2 = [profile.freqs4[0], profile.freqs4[3]];
                 for (let i = 3; i >= 0; i--) {
                     const bit = (val >> i) & 1;
                     const k = 3 - i;
-                    playBirdSyllable(freqs2[bit], sp, modMode, audioCtx, startTime + k * symInterval);
+                    const f = freqs2[bit];
+                    const t = startTime + k * symInterval;
+                    playSyllable(f, profile, modMode, audioCtx, t);
+                    schedulePadFlash(f, (t - ctxBaseTime) * 1000, profile.toneDur * 1000);
                 }
-                return 3 * symInterval + sp.toneDur + sp.charGap;
+                return 3 * symInterval + profile.toneDur + profile.charGap;
             }
+        }
+
+        function handleTransmitClick() {
+            if (isTransmitting) {
+                stopTransmission(true);
+                return;
+            }
+            transmitInput();
         }
 
         function transmitInput() {
             const rawText = document.getElementById('hexInput').value.toUpperCase().replace(/[^0-9A-F]/g, '');
-            if (!rawText) return;
+            if (!rawText) {
+                alert(translations[currentLang].alertEmptyHex);
+                return;
+            }
 
-            const sp = getActiveSpecies();
+            stopTransmission(true);
+
+            const profile = getActiveProfile();
             const modMode = getActiveModMode();
-
-            // Sacrificial 'F' preamble to absorb hardware lag and align receiver
-            const text = "F" + rawText;
+            const text = "F" + rawText; // Sacrificial 'F' preamble
 
             const audioCtx = initTxAudio();
-            let time = audioCtx.currentTime + 0.1;
+            const baseTime = audioCtx.currentTime;
+            let time = baseTime + 0.10;
 
-            // Out-of-band wakeup whistle (below f0) to wake mic AGC cleanly
+            isTransmitting = true;
+            const btn = document.getElementById('btnTransmit');
+            btn.classList.add('btn-stop');
+            btn.innerText = translations[currentLang].btnStopTx;
+
+            const progWrap = document.getElementById('txProgressWrap');
+            const progFill = document.getElementById('txProgressFill');
+            const progLabel = document.getElementById('txProgressLabel');
+            progWrap.style.display = 'block';
+            progFill.style.width = '4%';
+            progLabel.innerText = translations[currentLang].txWakeup;
+
+            // Wakeup tone
             const syncOsc = audioCtx.createOscillator();
             const syncGain = audioCtx.createGain();
             syncOsc.type = 'sine';
-            syncOsc.frequency.setValueAtTime(sp.syncFreq, time);
+            syncOsc.frequency.setValueAtTime(profile.syncFreq, time);
 
+            const syncDur = profile.waveform === 'square' ? 0.50 : 0.45;
             syncGain.gain.setValueAtTime(0.0001, time);
             syncGain.gain.linearRampToValueAtTime(0.22, time + 0.08);
-            syncGain.gain.setValueAtTime(0.22, time + 0.37);
-            syncGain.gain.linearRampToValueAtTime(0.0001, time + 0.45);
+            syncGain.gain.setValueAtTime(0.22, time + syncDur - 0.08);
+            syncGain.gain.linearRampToValueAtTime(0.0001, time + syncDur);
 
             syncOsc.connect(syncGain);
             syncGain.connect(txAnalyser);
             syncOsc.start(time);
-            syncOsc.stop(time + 0.46);
+            syncOsc.stop(time + syncDur + 0.01);
+            registerTxNode(syncOsc);
 
-            time += 0.58; // 130ms silence before first bird syllable
+            time += (profile.waveform === 'square') ? 0.60 : 0.58;
 
             for (let idx = 0; idx < text.length; idx++) {
-                // idx 0 is preamble 'F'; pairs (1,2), (3,4)... are ASCII bytes
+                const ch = text[idx];
                 const isEndOfByte = (idx > 0 && idx % 2 === 0);
-                const stride = playBirdHexChar(text[idx], sp, modMode, audioCtx, time, isEndOfByte);
+                const charStartMs = (time - baseTime) * 1000;
+                const pct = Math.round(((idx + 1) / text.length) * 100);
+
+                const timerId = setTimeout(() => {
+                    if (!isTransmitting) return;
+                    progFill.style.width = `${pct}%`;
+                    if (idx === 0) {
+                        progLabel.innerText = `${translations[currentLang].txSending}: [SYNC F]`;
+                    } else {
+                        progLabel.innerText = `${translations[currentLang].txSending}: ${rawText.slice(0, idx)} (${idx}/${rawText.length})`;
+                    }
+                }, Math.max(0, charStartMs));
+                activeTxTimers.push(timerId);
+
+                const stride = playHexChar(ch, profile, modMode, audioCtx, time, isEndOfByte, baseTime);
                 time += stride;
+            }
+
+            const totalMs = Math.max(100, (time - baseTime) * 1000);
+            const doneTimer = setTimeout(() => {
+                if (!isTransmitting) return;
+                progFill.style.width = '100%';
+                progLabel.innerText = translations[currentLang].txDone;
+                stopTransmission(false);
+            }, totalMs);
+            activeTxTimers.push(doneTimer);
+        }
+
+        function playSingleFreq(freq, padEl) {
+            const profile = getActiveProfile();
+            const modMode = getActiveModMode();
+            const audioCtx = initTxAudio();
+            playSyllable(freq, profile, modMode, audioCtx, audioCtx.currentTime + 0.02);
+            if (padEl) {
+                padEl.classList.add('playing');
+                setTimeout(() => padEl.classList.remove('playing'), profile.toneDur * 1000 + 30);
             }
         }
 
-        function playSingleFreq(freq) {
-            const sp = getActiveSpecies();
-            const modMode = getActiveModMode();
-            const audioCtx = initTxAudio();
-            playBirdSyllable(freq, sp, modMode, audioCtx, audioCtx.currentTime + 0.02);
-        }
+        // --- 100% LOCAL NON-BLOCKING IMAGE-TO-AUDIO ENGINE (NO AUDIOCONTEXT LEAK) ---
 
-        // --- 100% LOCAL IMAGE-TO-AUDIO ENGINE ---
-        async function uploadImage() {
+        let lastWavObjectUrl = null;
+
+        function uploadImage() {
             const fileInput = document.getElementById('imageInput');
             const btn = document.getElementById('uploadBtn');
             const status = document.getElementById('statusMessage');
@@ -582,32 +1175,32 @@
             }
 
             btn.disabled = true;
-            status.innerText = modeSelect === 'pc'
-                ? translations[currentLang].statusProcessingPC
-                : translations[currentLang].statusProcessingPhone;
-
+            status.innerText = `${translations[currentLang].statusProcessing} 0%`;
             audio.style.display = "none";
             audio.src = "";
 
             const file = fileInput.files[0];
+            const imgUrl = URL.createObjectURL(file);
             const img = new Image();
-            img.src = URL.createObjectURL(file);
 
-            img.onload = async () => {
-                setTimeout(() => processImageToAudio(img, btn, status, audio, modeSelect), 50);
+            img.onload = () => {
+                URL.revokeObjectURL(imgUrl);
+                processImageToAudioChunked(img, btn, status, audio, modeSelect);
             };
+            img.onerror = () => {
+                URL.revokeObjectURL(imgUrl);
+                btn.disabled = false;
+                status.innerText = "";
+                alert(translations[currentLang].alertBadFile);
+            };
+            img.src = imgUrl;
         }
 
-        function processImageToAudio(img, btn, status, audioEl, mode) {
+        function processImageToAudioChunked(img, btn, status, audioEl, mode) {
             const durationSec = 6.0;
             const sr = 16000;
-
-            let n_bins = 128;
-            let n_frames = 200;
-            if (mode === 'pc') {
-                n_bins = 256;
-                n_frames = 500;
-            }
+            const n_bins = (mode === 'pc') ? 256 : 128;
+            const n_frames = (mode === 'pc') ? 500 : 200;
 
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -630,13 +1223,10 @@
 
             const maxDist = Math.sqrt(255 * 255 * 3);
             const totalSamples = Math.floor(durationSec * sr);
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: sr });
-            const buffer = audioCtx.createBuffer(1, totalSamples, sr);
-            const channelData = buffer.getChannelData(0);
+            const channelData = new Float32Array(totalSamples);
 
             const freqs = new Float32Array(n_bins);
             const phases = new Float32Array(n_bins);
-
             for (let y = 0; y < n_bins; y++) {
                 const flippedY = (n_bins - 1) - y;
                 freqs[flippedY] = 200.0 + (y / n_bins) * (7800.0 - 200.0);
@@ -644,103 +1234,132 @@
             }
 
             const samplesPerFrame = totalSamples / n_frames;
+            const chunkSize = (mode === 'pc') ? 10 : 20;
+            let frameX = 0;
 
-            for (let x = 0; x < n_frames; x++) {
-                const startSample = Math.floor(x * samplesPerFrame);
-                const endSample = Math.floor((x + 1) * samplesPerFrame);
-
+            function processChunk() {
+                const endX = Math.min(frameX + chunkSize, n_frames);
                 const magnitudes = new Float32Array(n_bins);
-                for (let y = 0; y < n_bins; y++) {
-                    const idx = (y * n_frames + x) * 4;
-                    const dr = imgData[idx] - domR;
-                    const dg = imgData[idx + 1] - domG;
-                    const db = imgData[idx + 2] - domB;
-                    const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-                    let M = dist / maxDist;
-                    if (M < 0.1) M = 0;
-                    magnitudes[y] = M;
-                }
 
-                for (let i = startSample; i < endSample; i++) {
-                    const t = i / sr;
-                    let sampleVal = 0;
+                for (let x = frameX; x < endX; x++) {
+                    const startSample = Math.floor(x * samplesPerFrame);
+                    const endSample = Math.floor((x + 1) * samplesPerFrame);
+
                     for (let y = 0; y < n_bins; y++) {
-                        if (magnitudes[y] > 0) {
-                            sampleVal += magnitudes[y] * Math.sin(2 * Math.PI * freqs[y] * t + phases[y]);
-                        }
+                        const idx = (y * n_frames + x) * 4;
+                        const dr = imgData[idx] - domR;
+                        const dg = imgData[idx + 1] - domG;
+                        const db = imgData[idx + 2] - domB;
+                        const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+                        let M = dist / maxDist;
+                        if (M < 0.1) M = 0;
+                        magnitudes[y] = M;
                     }
-                    channelData[i] = sampleVal;
-                }
-            }
 
-            let maxAmp = 0;
-            for (let i = 0; i < totalSamples; i++) {
-                if (Math.abs(channelData[i]) > maxAmp) maxAmp = Math.abs(channelData[i]);
-            }
-            if (maxAmp > 0) {
+                    for (let i = startSample; i < endSample; i++) {
+                        const t = i / sr;
+                        let sampleVal = 0;
+                        for (let y = 0; y < n_bins; y++) {
+                            if (magnitudes[y] > 0) {
+                                sampleVal += magnitudes[y] * Math.sin(2 * Math.PI * freqs[y] * t + phases[y]);
+                            }
+                        }
+                        channelData[i] = sampleVal;
+                    }
+                }
+
+                frameX = endX;
+                const pct = Math.round((frameX / n_frames) * 100);
+                status.innerText = `${translations[currentLang].statusProcessing} ${pct}%`;
+
+                if (frameX < n_frames) {
+                    setTimeout(processChunk, 0);
+                    return;
+                }
+
+                // Normalize & encode WAV directly without creating an AudioContext
+                let maxAmp = 0;
                 for (let i = 0; i < totalSamples; i++) {
-                    channelData[i] = (channelData[i] / maxAmp) * 0.9;
+                    const a = Math.abs(channelData[i]);
+                    if (a > maxAmp) maxAmp = a;
                 }
+                if (maxAmp > 0) {
+                    const scale = 0.9 / maxAmp;
+                    for (let i = 0; i < totalSamples; i++) {
+                        channelData[i] *= scale;
+                    }
+                }
+
+                if (lastWavObjectUrl) {
+                    URL.revokeObjectURL(lastWavObjectUrl);
+                }
+                const wavBlob = float32ToWav(channelData, sr);
+                lastWavObjectUrl = URL.createObjectURL(wavBlob);
+
+                status.innerText = translations[currentLang].statusReady;
+                audioEl.src = lastWavObjectUrl;
+                audioEl.style.display = "block";
+                btn.disabled = false;
             }
 
-            const wavBlob = bufferToWav(buffer, totalSamples, sr);
-            const url = URL.createObjectURL(wavBlob);
-
-            status.innerText = translations[currentLang].statusReady;
-            audioEl.src = url;
-            audioEl.style.display = "block";
-            btn.disabled = false;
+            setTimeout(processChunk, 10);
         }
 
-        function bufferToWav(abuffer, len, sr) {
-            const numOfChan = abuffer.numberOfChannels;
-            const length = len * numOfChan * 2 + 44;
-            const buffer = new ArrayBuffer(length);
+        function float32ToWav(samples, sr) {
+            const len = samples.length;
+            const buffer = new ArrayBuffer(len * 2 + 44);
             const view = new DataView(buffer);
-            const channels = [];
-            let sample;
-            let offset = 0;
             let pos = 0;
 
             function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
             function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
 
-            setUint32(0x46464952);
-            setUint32(length - 8);
-            setUint32(0x45564157);
-            setUint32(0x20746d66);
+            setUint32(0x46464952); // "RIFF"
+            setUint32(len * 2 + 36);
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt "
             setUint32(16);
-            setUint16(1);
-            setUint16(numOfChan);
+            setUint16(1);          // PCM
+            setUint16(1);          // Mono
             setUint32(sr);
-            setUint32(sr * 2 * numOfChan);
-            setUint16(numOfChan * 2);
+            setUint32(sr * 2);
+            setUint16(2);
             setUint16(16);
-            setUint32(0x61746164);
-            setUint32(length - pos - 4);
+            setUint32(0x61746164); // "data"
+            setUint32(len * 2);
 
-            for (let i = 0; i < abuffer.numberOfChannels; i++) {
-                channels.push(abuffer.getChannelData(i));
-            }
-
-            while (pos < length) {
-                for (let i = 0; i < numOfChan; i++) {
-                    sample = Math.max(-1, Math.min(1, channels[i][offset]));
-                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
-                    view.setInt16(pos, sample, true);
-                    pos += 2;
-                }
-                offset++;
+            for (let i = 0; i < len; i++) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                const pcm = s < 0 ? Math.round(s * 32768) : Math.round(s * 32767);
+                view.setInt16(pos, pcm, true);
+                pos += 2;
             }
             return new Blob([buffer], { type: "audio/wav" });
         }
 
-        // --- LIVE MOBILE SPECTROMETER LOGIC ---
+        // --- LIVE MOBILE SPECTROMETER LOGIC (WITH ZOOM & PROPER MIC CLEANUP) ---
+
         let spectroAudioCtx = null;
         let analyser = null;
         let spectroMic = null;
+        let spectroStream = null;
         let spectroReqId = null;
         let isSpectroRunning = false;
+
+        function getSpectroMaxFreq() {
+            const selected = parseInt(document.getElementById('spectroRangeSelect').value, 10);
+            const nyquist = spectroAudioCtx ? spectroAudioCtx.sampleRate / 2 : 22050;
+            if (!selected || selected >= nyquist) return nyquist;
+            return selected;
+        }
+
+        function onSpectroRangeChange() {
+            if (isSpectroRunning && spectroAudioCtx) {
+                buildFreqScale(getSpectroMaxFreq());
+                const canvas = document.getElementById('spectroCanvas');
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
 
         function toggleFullscreen() {
             const wrapper = document.getElementById('spectroWrapper');
@@ -753,14 +1372,14 @@
             }
         }
 
-        function buildFreqScale(nyquist) {
+        function buildFreqScale(maxFreqHz) {
             const scaleDiv = document.getElementById('freqScale');
             scaleDiv.innerHTML = '';
             for (let i = 4; i >= 0; i--) {
-                const freqHz = nyquist * (i / 4);
+                const freqHz = maxFreqHz * (i / 4);
                 const freqKHz = freqHz / 1000;
                 const span = document.createElement('span');
-                span.innerText = freqKHz >= 1 ? freqKHz.toFixed(1) + 'k' : '0';
+                span.innerText = freqKHz >= 1 ? freqKHz.toFixed(1) + 'k' : (freqHz > 0 ? Math.round(freqHz) + '' : '0');
                 scaleDiv.appendChild(span);
             }
         }
@@ -771,9 +1390,16 @@
 
             if (isSpectroRunning) {
                 cancelAnimationFrame(spectroReqId);
-                if (spectroMic) spectroMic.disconnect();
-                if (analyser) analyser.disconnect();
-                if (spectroAudioCtx) spectroAudioCtx.close();
+                if (spectroMic) { spectroMic.disconnect(); spectroMic = null; }
+                if (analyser) { analyser.disconnect(); analyser = null; }
+                if (spectroStream) {
+                    spectroStream.getTracks().forEach(track => track.stop());
+                    spectroStream = null;
+                }
+                if (spectroAudioCtx) {
+                    await spectroAudioCtx.close().catch(() => {});
+                    spectroAudioCtx = null;
+                }
 
                 isSpectroRunning = false;
                 btn.innerText = translations[currentLang].btnStartSpectro;
@@ -781,8 +1407,7 @@
                 freqScaleDiv.style.display = "none";
 
                 const canvas = document.getElementById('spectroCanvas');
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
                 if (document.fullscreenElement || document.webkitFullscreenElement) {
                     toggleFullscreen();
@@ -791,7 +1416,7 @@
             }
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
+                spectroStream = await navigator.mediaDevices.getUserMedia({
                     audio: {
                         echoCancellation: false,
                         noiseSuppression: false,
@@ -801,21 +1426,25 @@
                 });
                 spectroAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 analyser = spectroAudioCtx.createAnalyser();
-                analyser.fftSize = 1024;
+                analyser.fftSize = 2048;
                 analyser.smoothingTimeConstant = 0.2;
 
-                spectroMic = spectroAudioCtx.createMediaStreamSource(stream);
+                spectroMic = spectroAudioCtx.createMediaStreamSource(spectroStream);
                 spectroMic.connect(analyser);
 
                 isSpectroRunning = true;
                 btn.innerText = translations[currentLang].btnStopSpectro;
                 btn.style.background = "#d9534f";
 
-                buildFreqScale(spectroAudioCtx.sampleRate / 2);
+                buildFreqScale(getSpectroMaxFreq());
                 freqScaleDiv.style.display = "flex";
 
                 drawSpectrogram();
             } catch (err) {
+                if (spectroStream) {
+                    spectroStream.getTracks().forEach(track => track.stop());
+                    spectroStream = null;
+                }
                 alert(translations[currentLang].errMic);
             }
         }
@@ -831,7 +1460,7 @@
             const SHIFT_PX = 2;
 
             function render(time) {
-                if (!isSpectroRunning) return;
+                if (!isSpectroRunning || !analyser || !spectroAudioCtx) return;
                 spectroReqId = requestAnimationFrame(render);
 
                 if (time - lastTime < 33) return;
@@ -843,18 +1472,23 @@
                 const w = canvas.width;
                 const h = canvas.height;
                 const rightEdge = w - SHIFT_PX;
-                const binsPerPixel = Math.floor(bufferLength / h);
+
+                const nyquist = spectroAudioCtx.sampleRate / 2;
+                const maxFreq = getSpectroMaxFreq();
+                const usableBins = Math.max(1, Math.min(bufferLength, Math.floor((maxFreq / nyquist) * bufferLength)));
 
                 for (let y = 0; y < h; y++) {
+                    const binStart = Math.floor((y / h) * usableBins);
+                    const binEnd = Math.max(binStart + 1, Math.floor(((y + 1) / h) * usableBins));
                     let sum = 0;
-                    for (let i = 0; i < binsPerPixel; i++) {
-                        sum += dataArray[y * binsPerPixel + i];
+                    for (let b = binStart; b < binEnd && b < bufferLength; b++) {
+                        sum += dataArray[b];
                     }
-                    let val = sum / binsPerPixel;
+                    const val = sum / (binEnd - binStart);
 
-                    let r = val;
-                    let g = val > 128 ? (val - 128) * 2 : 0;
-                    let b = val > 200 ? (val - 200) * 4 : 0;
+                    const r = Math.min(255, Math.round(val));
+                    const g = val > 128 ? Math.min(255, Math.round((val - 128) * 2)) : 0;
+                    const b = val > 200 ? Math.min(255, Math.round((val - 200) * 4)) : 0;
 
                     ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
                     ctx.fillRect(rightEdge, h - 1 - y, SHIFT_PX, 1);
@@ -863,8 +1497,30 @@
             spectroReqId = requestAnimationFrame(render);
         }
 
-        // Initialize UI on load
-        updateSpeciesUI();
+        // --- URL PARAMETER AUTO-CONFIG (?profile=canary&mode=4fsk&lang=ro) ---
+
+        function applyUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const langParam = (params.get('lang') || '').toLowerCase();
+            if (langParam === 'ro' || langParam === 'en') {
+                currentLang = langParam;
+            }
+
+            const profileParam = (params.get('profile') || '').toLowerCase();
+            if (profileParam && PROFILES[profileParam]) {
+                document.getElementById('profileSelect').value = profileParam;
+            }
+
+            const modeParam = (params.get('mode') || '').toLowerCase();
+            if (modeParam) {
+                const radio = document.querySelector(`input[name="modMode"][value="${modeParam}"]`);
+                if (radio) radio.checked = true;
+            }
+        }
+
+        // Initialize on load
+        applyUrlParams();
+        setLanguage(currentLang);
     </script>
 </body>
 </html>
